@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tripo AI Multimodal 3D Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
+
+  <style>
+    model-viewer { width: 100%; height: 256px; background-color: #020617; border-radius: 0.75rem; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-6">
+
+  <div class="max-w-md w-full bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-700">
+    <h1 class="text-2xl font-bold mb-2 text-center bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">
+      Tripo Multi-Modality Engine
+    </h1>
+    <p class="text-sm text-slate-400 text-center mb-6">Generate precision 3D meshes using text, images, or both</p>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Reference Image (Optional)</label>
+        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-950 file:text-teal-400 hover:file:bg-slate-900 cursor-pointer">
+        <div id="imagePreviewContainer" class="mt-3 hidden justify-center">
+          <img id="imgPreview" class="h-24 w-24 object-contain rounded-xl border border-slate-700 bg-slate-950 p-1" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Text Context/Prompt</label>
+        <textarea id="prompt" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm focus:outline-none focus:border-teal-500 resize-none placeholder-slate-600" placeholder="Describe detailing guidance, color tweaks, or leave empty if using image only..."></textarea>
+      </div>
+
+      <button id="generateBtn" onclick="generate3DModel()" class="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 cursor-pointer">
+        Run Generation Engine
+      </button>
+    </div>
+
+    <div id="statusBox" class="mt-6 p-4 rounded-xl bg-slate-950 border border-slate-800 hidden text-center">
+      <div id="spinner" class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-teal-500 rounded-full mb-2"></div>
+      <p id="statusText" class="text-sm font-medium text-slate-300">Processing request...</p>
+      
+      <div id="viewerArea" class="hidden mt-4 space-y-4">
+        <model-viewer id="3dPreview" camera-controls auto-rotate alt="Render visualization grid"></model-viewer>
+        <button id="downloadBtn" class="w-full inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl text-sm shadow cursor-pointer transition-all">
+          Download .STL Print File
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentBlobUrl = null;
+    let globalGlbBuffer = null;
+    let currentTaskId = "";
+    let base64ImageData = null;
+
+    // Renders thumbnail inside user UI container immediately upon local load
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        base64ImageData = e.target.result;
+        document.getElementById('imgPreview').src = base64ImageData;
+        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+        document.getElementById('imagePreviewContainer').classList.add('flex');
+      }
+      reader.readAsDataURL(file);
+    }
+
+    async function generate3DModel() {
+      const promptVal = document.getElementById('prompt').value.trim();
+      
+      if (!promptVal && !base64ImageData) {
+        return alert('Please supply a text description, an image blueprint, or both!');
+      }
+
+      const genBtn = document.getElementById('generateBtn');
+      const statusBox = document.getElementById('statusBox');
+      const statusText = document.getElementById('statusText');
+      const spinner = document.getElementById('spinner');
+      const viewerArea = document.getElementById('viewerArea');
+
+      if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); }
+
+      genBtn.disabled = true;
+      statusBox.classList.remove('hidden');
+      viewerArea.classList.add('hidden');
+      spinner.classList.remove('hidden');
+      statusText.innerText = "Processing assets and preparing payload...";
+
+      // Setup structured JSON configuration matching Tripo rules
+      let requestPayload = {};
+
+      if (base64ImageData) {
+        // Image asset present -> invoke image_to_model processing logic
+        requestPayload = {
+          type: "image_to_model",
+          file: {
+            type: base64ImageData.split(';')[0].split(':')[1], // Extracts file mime type natively (png, jpeg, etc.)
+            data: base64ImageData.split(',')[1] // Trims header to extract clean Base64 string data
+          }
+        };
+        // Add text modifier parameter support if provided
+        if (promptVal) {
+          requestPayload.prompt = promptVal;
+        }
+      } else {
+        // Pure text fallback mode configuration
+        requestPayload = {
+          type: "text_to_model",
+          prompt: promptVal
+        };
+      }
+
+      try {
+        const response = await fetch("https://tangiblex-backend.onrender.com/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestPayload)
+        });
+
+        const data = await response.json();
+        if (data.data && data.data.task_id) {
+          statusText.innerText = "Task accepted! Calculating structural vectors...";
+          pollStatus(data.data.task_id);
+        } else {
+          // Double fallback in case response structure is direct
+          const alternativeId = data.task_id || (data.data && data.data.task_id);
+          if (alternativeId) {
+            statusText.innerText = "Task accepted! Calculating structural vectors...";
+            pollStatus(alternativeId);
+          } else {
+            throw new Error(data.message || "Failed to launch pipeline task.");
+          }
+        }
+      } catch (err) {
+        statusText.innerText = "Error: " + err.message;
+        spinner.classList.add('hidden');
+        genBtn.disabled = false;
+      }
+    }
+
+    async function pollStatus(taskId) {
+      currentTaskId = taskId;
+      const statusText = document.getElementById('statusText');
+      const spinner = document.getElementById('spinner');
+      const viewerArea = document.getElementById('viewerArea');
+      const viewer = document.getElementById('3dPreview');
+      const genBtn = document.getElementById('generateBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`https://tangiblex-backend.onrender.com/status/${taskId}`);
+          const result = await res.json();
+
+          // SAFETY FIXED LAYER: Accommodates both direct and nested JSON object outputs
+          const task = result.data || result;
+
+          if (!task || (!task.status && !result.status)) {
+            throw new Error("Could not parse status payload.");
+          }
+
+          const currentStatus = task.status || result.status;
+          const currentProgress = task.progress !== undefined ? task.progress : (result.progress || 0);
+
+          if (currentStatus === 'success') {
+            clearInterval(interval);
+            statusText.innerText = "Mesh compiled! Loading visualizer grids...";
+            
+            // Safety parsing sequence for nested output tracking
+            const taskOutput = task.output || result.output;
+            const rawModelUrl = taskOutput?.model || taskOutput?.pbr_model || taskOutput?.glb;
+
+            if (rawModelUrl) {
+              const fileResponse = await fetch("https://tangiblex-backend.onrender.com/fetch-file", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: rawModelUrl })
+              });
+              
+              globalGlbBuffer = await fileResponse.arrayBuffer();
+              currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer]));
+
+              viewer.src = currentBlobUrl;
+              downloadBtn.onclick = convertAndDownloadSTL;
+
+              statusText.innerText = "Complete! Drag model to evaluate angles.";
+              spinner.classList.add('hidden');
+              viewerArea.classList.remove('hidden');
+            } else {
+              throw new Error("Finished model URL missing from Tripo's response.");
+            }
+            genBtn.disabled = false;
+          } else if (currentStatus === 'failed' || currentStatus === 'banned') {
+            clearInterval(interval);
+            statusText.innerText = `Process terminated: ${currentStatus}`;
+            spinner.classList.add('hidden');
+            genBtn.disabled = false;
+          } else {
+            statusText.innerText = `Extruding vertices... (${currentProgress}%)`;
+          }
+        } catch (err) {
+          clearInterval(interval);
+          statusText.innerText = "Error: " + err.message;
+          spinner.classList.add('hidden');
+          genBtn.disabled = false;
+        }
+      }, 4000);
+    }
+
+    function convertAndDownloadSTL() {
+      if (!globalGlbBuffer) return alert("Asset buffer empty!");
+      
+      const loader = new THREE.GLTFLoader();
+      loader.parse(globalGlbBuffer, '', function (gltf) {
+        const exporter = new THREE.STLExporter();
+        const result = exporter.parse(gltf.scene, { binary: true });
+        
+        const blob = new Blob([result], { type: 'application/sla' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `multimodal-mesh-${currentTaskId}.stl`;
+        link.click();
+      }, function (error) {
+        alert("Mesh composition error: " + error.message);
+      });
+    }
+  </script>
+</body>
+</html>
