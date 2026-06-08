@@ -25,6 +25,21 @@
 
     <div class="space-y-4">
       <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Generation Mode</label>
+        <select id="generationMode" onchange="toggleModeLayout()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm focus:outline-none focus:border-teal-500 text-slate-300">
+          <option value="scratch">Generate New 3D Shape from Scratch</option>
+          <option value="texture">AI Texture Painting (On Pre-made Template)</option>
+        </select>
+      </div>
+
+      <div id="brickSelectionContainer" class="hidden">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Select Brick Template</label>
+        <select id="brickTemplate" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm focus:outline-none focus:border-teal-500 text-slate-300">
+          <option value="brick_1x1">Brick 1x1</option>
+          <option value="plate_2x4">Plate 2x4</option> </select>
+      </div>
+
+      <div id="imageInputContainer">
         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Reference Image (Optional)</label>
         <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-950 file:text-teal-400 hover:file:bg-slate-900 cursor-pointer">
         <div id="imagePreviewContainer" class="mt-3 hidden justify-center">
@@ -33,7 +48,7 @@
       </div>
 
       <div>
-        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Text Context/Prompt</label>
+        <label id="promptLabel" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Text Context/Prompt</label>
         <textarea id="prompt" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm focus:outline-none focus:border-teal-500 resize-none placeholder-slate-600" placeholder="Describe detailing guidance, color tweaks, or leave empty if using image only..."></textarea>
       </div>
 
@@ -61,7 +76,26 @@
     let currentTaskId = "";
     let base64ImageData = null;
 
-    // Renders thumbnail inside user UI container immediately upon local load
+    function toggleModeLayout() {
+      const mode = document.getElementById('generationMode').value;
+      const brickContainer = document.getElementById('brickSelectionContainer');
+      const imageContainer = document.getElementById('imageInputContainer');
+      const promptBox = document.getElementById('prompt');
+      const promptLabel = document.getElementById('promptLabel');
+
+      if (mode === 'texture') {
+        brickContainer.classList.remove('hidden');
+        imageContainer.classList.add('hidden');
+        promptLabel.innerText = "Describe Paint style / Texture Material";
+        promptBox.placeholder = "e.g., carbon fiber weave pattern, glowing neon pink lines, shiny gold chrome metal...";
+      } else {
+        brickContainer.classList.add('hidden');
+        imageContainer.classList.remove('hidden');
+        promptLabel.innerText = "Text Context/Prompt";
+        promptBox.placeholder = "Describe detailing guidance, color tweaks, or leave empty if using image only...";
+      }
+    }
+
     function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -78,9 +112,14 @@
 
     async function generate3DModel() {
       const promptVal = document.getElementById('prompt').value.trim();
+      const mode = document.getElementById('generationMode').value;
+      const selectedBrick = document.getElementById('brickTemplate').value;
       
-      if (!promptVal && !base64ImageData) {
+      if (mode === 'scratch' && !promptVal && !base64ImageData) {
         return alert('Please supply a text description, an image blueprint, or both!');
+      }
+      if (mode === 'texture' && !promptVal) {
+        return alert('Please describe the material style or colors you want painted onto the template!');
       }
 
       const genBtn = document.getElementById('generateBtn');
@@ -97,28 +136,44 @@
       spinner.classList.remove('hidden');
       statusText.innerText = "Processing assets and preparing payload...";
 
-      // Setup structured JSON configuration matching Tripo rules
       let requestPayload = {};
 
-      if (base64ImageData) {
-        // Image asset present -> invoke image_to_model processing logic
-        requestPayload = {
-          type: "image_to_model",
-          file: {
-            type: base64ImageData.split(';')[0].split(':')[1], // Extracts file mime type natively (png, jpeg, etc.)
-            data: base64ImageData.split(',')[1] // Trims header to extract clean Base64 string data
-          }
+      if (mode === 'texture') {
+        const brickLibrary = {
+          "brick_1x1": "https://raw.githubusercontent.com/Tangiblex-Creator/templates/refs/heads/main/templates/Brick%201x1.obj",
+          "plate_2x4": "https://raw.githubusercontent.com/Tangiblex-Creator/templates/refs/heads/main/templates/Brick%202x4.obj"
         };
-        // Add text modifier parameter support if provided
-        if (promptVal) {
-          requestPayload.prompt = promptVal;
-        }
+        
+        const selectedModelUrl = brickLibrary[selectedBrick];
+        
+        // This hybrid structure handles strict API routing smoothly
+        requestPayload = {
+          type: "texture_model",
+          model_url: selectedModelUrl, 
+          model: {
+            type: "obj",
+            url: selectedModelUrl
+          },
+          text_prompt: promptVal,
+          prompt: promptVal,
+          texture_format: "png"
+        };
       } else {
-        // Pure text fallback mode configuration
-        requestPayload = {
-          type: "text_to_model",
-          prompt: promptVal
-        };
+        if (base64ImageData) {
+          requestPayload = {
+            type: "image_to_model",
+            file: {
+              type: base64ImageData.split(';')[0].split(':')[1],
+              data: base64ImageData.split(',')[1]
+            }
+          };
+          if (promptVal) { requestPayload.prompt = promptVal; }
+        } else {
+          requestPayload = {
+            type: "text_to_model",
+            prompt: promptVal
+          };
+        }
       }
 
       try {
@@ -129,18 +184,19 @@
         });
 
         const data = await response.json();
-        if (data.data && data.data.task_id) {
+        
+        // Error handling fallback for custom proxy responses
+        if (!response.ok) {
+          throw new Error(data.message || data.error || `Server returned status ${response.status}`);
+        }
+
+        const taskId = data.task_id || (data.data && data.data.task_id);
+        
+        if (taskId) {
           statusText.innerText = "Task accepted! Calculating structural vectors...";
-          pollStatus(data.data.task_id);
+          pollStatus(taskId);
         } else {
-          // Double fallback in case response structure is direct
-          const alternativeId = data.task_id || (data.data && data.data.task_id);
-          if (alternativeId) {
-            statusText.innerText = "Task accepted! Calculating structural vectors...";
-            pollStatus(alternativeId);
-          } else {
-            throw new Error(data.message || "Failed to launch pipeline task.");
-          }
+          throw new Error(data.message || "Failed to launch pipeline task.");
         }
       } catch (err) {
         statusText.innerText = "Error: " + err.message;
@@ -157,13 +213,13 @@
       const viewer = document.getElementById('3dPreview');
       const genBtn = document.getElementById('generateBtn');
       const downloadBtn = document.getElementById('downloadBtn');
+      const mode = document.getElementById('generationMode').value;
 
       const interval = setInterval(async () => {
         try {
           const res = await fetch(`https://tangiblex-backend.onrender.com/status/${taskId}`);
           const result = await res.json();
 
-          // SAFETY FIXED LAYER: Accommodates both direct and nested JSON object outputs
           const task = result.data || result;
 
           if (!task || (!task.status && !result.status)) {
@@ -177,7 +233,6 @@
             clearInterval(interval);
             statusText.innerText = "Mesh compiled! Loading visualizer grids...";
             
-            // Safety parsing sequence for nested output tracking
             const taskOutput = task.output || result.output;
             const rawModelUrl = taskOutput?.model || taskOutput?.pbr_model || taskOutput?.glb;
 
@@ -207,7 +262,11 @@
             spinner.classList.add('hidden');
             genBtn.disabled = false;
           } else {
-            statusText.innerText = `Extruding vertices... (${currentProgress}%)`;
+            if (mode === 'texture') {
+              statusText.innerText = `Mapping texture layouts... (${currentProgress}%)`;
+            } else {
+              statusText.innerText = `Extruding vertices... (${currentProgress}%)`;
+            }
           }
         } catch (err) {
           clearInterval(interval);
@@ -229,7 +288,7 @@
         const blob = new Blob([result], { type: 'application/sla' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `multimodal-mesh-${currentTaskId}.stl`;
+        link.download = `textured-mesh-${currentTaskId}.stl`;
         link.click();
       }, function (error) {
         alert("Mesh composition error: " + error.message);
