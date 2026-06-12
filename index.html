@@ -441,7 +441,7 @@
         currentTaskId = taskId;
         taskBadge.innerText = `ID: ${taskId}`;
         taskBadge.classList.remove("hidden");
-        statusText.innerText = "Request received! Generating shape geometry...";
+        statusText.innerText = "Request received! Generating shape geometry...';
         pollStatus(taskId);
       } catch (err) {
         statusText.innerText = "Error: " + err.message;
@@ -797,14 +797,14 @@
       
       const isOrdered = order.status === "ordered" || order.status === "demo_shipped";
       
-      // Tracking configurations for our 2 hover tooltip icons
+      // Simplified tooltips matching simple headers
       const orderBadgeColor = isOrdered ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-blue-100 text-blue-800 border-blue-200";
-      const orderTooltip = isOrdered ? "Order Status: Shipped & Processing" : "Order Status: Saved Template Design Only";
+      const orderTooltip = isOrdered ? "Ordered" : "Saved Design";
       const orderIcon = isOrdered ? "📦" : "💾";
 
       const isPub = !!order.is_published;
       const pubBadgeColor = isPub ? "bg-purple-100 text-purple-800 border-purple-200" : "bg-zinc-100 text-zinc-500 border-zinc-200";
-      const pubTooltip = isPub ? "Sharing Status: Published to Community Showcase" : "Sharing Status: Private to Your Vault Account";
+      const pubTooltip = isPub ? "Shared" : "Private";
       const pubIcon = isPub ? "🌍" : "🔒";
 
       return `
