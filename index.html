@@ -3,19 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TangiblX | Custom LEGO Demo</title>
+  <title>TangiblX | Design Your Own Custom Bricks</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
   <style>
     html { scroll-behavior: smooth; }
     model-viewer { width: 100%; height: 280px; background: #111827; border-radius: 8px; }
     .nav-btn[data-active="true"] { background: #111827; color: #ffffff; border-color: #334155; }
     .section { display: none; }
     .section[data-visible="true"] { display: block; }
+    
+    /* Simple CSS Tooltip styling */
+    .tooltip-container { position: relative; }
+    .tooltip-text {
+      visibility: hidden;
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f2937;
+      color: #fff;
+      text-align: center;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .tooltip-container:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-zinc-50 text-zinc-950">
@@ -23,13 +46,13 @@
     <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
       <button onclick="showSection('landing')" class="text-left">
         <span class="block text-xl font-black tracking-tight text-red-600">TangiblX</span>
-        <span class="block text-xs font-semibold uppercase tracking-wider text-zinc-500">Custom LEGO demo</span>
+        <span class="block text-xs font-semibold uppercase tracking-wider text-zinc-500">Custom Toy Creator</span>
       </button>
 
       <nav id="appNav" class="hidden items-center gap-2">
-        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="workshop" onclick="showSection('workshop')">Workshop</button>
-        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="orders" onclick="showSection('orders')">Designs & Orders</button>
-        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="marketplace" onclick="showSection('marketplace')">Marketplace</button>
+        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="workshop" onclick="showSection('workshop')">Create</button>
+        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="orders" onclick="showSection('orders')">My Saved Designs</button>
+        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="marketplace" onclick="showSection('marketplace')">Community Gallery</button>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -45,9 +68,9 @@
       <div class="border-b border-zinc-200 bg-white">
         <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
-            <p class="mb-4 inline-flex rounded-md bg-yellow-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-950">Demo for custom brick ideas</p>
-            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-zinc-950 md:text-6xl">Turn a sketch or prompt into a custom LEGO-style piece.</h1>
-            <p class="mt-5 max-w-2xl text-lg leading-8 text-zinc-600">TangiblX is a demo workspace for designing playful custom LEGO-inspired pieces with AI. Sign in, describe an idea, upload a reference image if you have one, preview the generated 3D model, and save the design as a demo order.</p>
+            <p class="mb-4 inline-flex rounded-md bg-yellow-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-950">Make Your Own Custom Bricks</p>
+            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-zinc-950 md:text-6xl">Turn an idea or picture into a custom building piece.</h1>
+            <p class="mt-5 max-w-2xl text-lg leading-8 text-zinc-600">TangiblX makes it simple to design custom building toy pieces. Type a description, add a reference photo if you have one, view your custom piece in 3D, and save it directly to your account to order anytime.</p>
             <div class="mt-8 flex flex-wrap gap-3">
               <button onclick="showSection('auth', 'signup')" class="rounded-md bg-red-600 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500">Create account</button>
               <button onclick="showSection('auth', 'login')" class="rounded-md border border-zinc-300 px-5 py-3 text-sm font-black text-zinc-900 hover:bg-zinc-100">Log in</button>
@@ -81,21 +104,6 @@
           </div>
         </div>
       </div>
-
-      <div class="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-3">
-        <article class="rounded-lg border border-zinc-200 bg-white p-5">
-          <h2 class="text-base font-black">Prompt or image</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Start from a written idea, a reference image, or both.</p>
-        </article>
-        <article class="rounded-lg border border-zinc-200 bg-white p-5">
-          <h2 class="text-base font-black">Preview in 3D</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Inspect the generated model directly in the browser.</p>
-        </article>
-        <article class="rounded-lg border border-zinc-200 bg-white p-5">
-          <h2 class="text-base font-black">Save and share</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Save demo orders to your account and publish favorites to the marketplace.</p>
-        </article>
-      </div>
     </section>
 
     <section id="auth" class="section">
@@ -105,11 +113,11 @@
             <button id="loginTab" onclick="setAuthMode('login')" class="flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm">Log in</button>
             <button id="signupTab" onclick="setAuthMode('signup')" class="flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500">Sign up</button>
           </div>
-          <h2 id="authTitle" class="text-2xl font-black">Log in to TangiblX</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Accounts are powered by Supabase so demo orders can be saved to your profile.</p>
+          <h2 id="authTitle" class="text-2xl font-black">Log in to Your Account</h2>
+          <p class="mt-2 text-sm leading-6 text-zinc-600">Log in to safely save, edit, and order your custom building pieces.</p>
           <div class="mt-5 space-y-4">
             <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Email</label>
+              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Email Address</label>
               <input id="authEmail" type="email" autocomplete="email" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="you@example.com">
             </div>
             <div>
@@ -126,40 +134,40 @@
     <section id="workshop" class="section">
       <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <p class="text-xs font-black uppercase tracking-wider text-red-600">Workshop</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Create a custom piece</h2>
-          <p class="mt-3 text-sm leading-6 text-zinc-600">Describe a LEGO-style part, upload a reference image, or use both. TangiblX will send the request through the current Tripo generation pipeline.</p>
+          <p class="text-xs font-black uppercase tracking-wider text-red-600">Design Studio</p>
+          <h2 class="mt-2 text-3xl font-black tracking-tight">Create a Custom Piece</h2>
+          <p class="mt-3 text-sm leading-6 text-zinc-600">Describe what you want to make, add a picture if you want, and our generator will build it into a 3D model for you.</p>
 
           <div class="mt-6 space-y-5">
             <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Reference image optional</label>
+              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Add a Picture (Optional)</label>
               <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="w-full rounded-md border border-dashed border-zinc-300 p-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
               <div id="imagePreviewContainer" class="mt-3 hidden">
-                <img id="imgPreview" class="h-28 w-28 rounded-md border border-zinc-200 bg-zinc-100 object-contain p-1" alt="Uploaded reference preview">
+                <img id="imgPreview" class="h-28 w-28 rounded-md border border-zinc-200 bg-zinc-100 object-contain p-1" alt="Uploaded snapshot template">
               </div>
             </div>
 
             <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Prompt</label>
-              <textarea id="prompt" rows="5" class="w-full resize-none rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Example: A red LEGO-compatible mini trophy piece with round studs and smooth curved handles"></textarea>
+              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Describe Your Piece</label>
+              <textarea id="prompt" rows="5" class="w-full resize-none rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Example: A shiny red toy trophy piece with two handles and studs on top"></textarea>
             </div>
 
-            <button id="generateBtn" onclick="generate3DModel()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Generate 3D model</button>
+            <button id="generateBtn" onclick="generate3DModel()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Create 3D Model</button>
           </div>
         </div>
 
         <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Preview</p>
-              <h2 class="mt-2 text-2xl font-black">Generated model</h2>
+              <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Your Preview</p>
+              <h2 class="mt-2 text-2xl font-black">3D View</h2>
             </div>
             <span id="taskBadge" class="hidden rounded-md bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600"></span>
           </div>
 
           <div id="statusBox" class="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-5 text-center">
             <div id="spinner" class="mx-auto mb-3 hidden h-7 w-7 animate-spin rounded-full border-[3px] border-red-600 border-t-transparent"></div>
-            <p id="statusText" class="text-sm font-semibold text-zinc-600">Your model preview will appear here after generation.</p>
+            <p id="statusText" class="text-sm font-semibold text-zinc-600">Your creation will show up here as soon as it finishes generating.</p>
           </div>
 
           <div id="viewerArea" class="mt-5 hidden space-y-4">
@@ -171,12 +179,12 @@
                           exposure="1.1"
                           environment-image="neutral"
                           interaction-prompt="none"
-                          alt="TangiblX generated LEGO-style model">
+                          alt="TangiblX custom created item">
             </model-viewer>
 
             <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
               <div class="flex items-center justify-between text-xs font-black uppercase tracking-wider text-zinc-500 mb-1">
-                <label for="scaleSlider">Model Sizing Scale</label>
+                <label for="scaleSlider">Size Multiplier</label>
                 <span id="scaleDisplay" class="font-mono text-red-600 bg-white border border-zinc-200 px-1.5 py-0.5 rounded">1.0x</span>
               </div>
               <input type="range" id="scaleSlider" min="0.5" max="5.0" step="0.1" value="1.0" oninput="handleScaleAdjustment(this.value)" class="w-full accent-red-600 cursor-pointer">
@@ -184,7 +192,7 @@
 
             <div id="printStats" class="hidden rounded-lg bg-zinc-900 p-4 text-xs font-mono text-zinc-300 shadow-inner">
               <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
-                <p class="font-black uppercase tracking-wider text-red-500">3D Print Metrics</p>
+                <p class="font-black uppercase tracking-wider text-red-500">Item Details</p>
                 <select id="unitSelector" onchange="updateDisplayedUnits()" class="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-white outline-none focus:border-red-500">
                   <option value="mm" selected>Millimeters (mm)</option>
                   <option value="cm">Centimeters (cm)</option>
@@ -195,13 +203,13 @@
                 <div>Dimensions: <span id="statSize" class="text-white font-bold">-</span></div>
                 <div>Est. Volume: <span id="statVolume" class="text-white font-bold">-</span></div>
                 <div>Est. Weight: <span id="statWeight" class="text-white font-bold">-</span></div>
-                <div>Filament Cost: <span id="statCost" class="text-yellow-400 font-bold">-</span></div>
+                <div>Material Cost: <span id="statCost" class="text-yellow-400 font-bold">-</span></div>
               </div>
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2">
               <button id="saveDesignBtn" onclick="persistDesign('saved')" class="rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Save Design</button>
-              <button id="shipBtn" onclick="persistDesign('ordered')" class="rounded-md bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Send for shipping</button>
+              <button id="shipBtn" onclick="persistDesign('ordered')" class="rounded-md bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Order and Ship</button>
             </div>
             <p id="shipMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
           </div>
@@ -213,10 +221,10 @@
       <div class="mx-auto max-w-6xl px-4 py-8">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p class="text-xs font-black uppercase tracking-wider text-red-600">Your Gallery</p>
-            <h2 class="mt-2 text-3xl font-black tracking-tight">Saved Designs & Orders</h2>
+            <p class="text-xs font-black uppercase tracking-wider text-red-600">My Collection</p>
+            <h2 class="mt-2 text-3xl font-black tracking-tight">Your Saved Items & Orders</h2>
           </div>
-          <button onclick="loadOrders()" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black hover:bg-zinc-100">Refresh</button>
+          <button onclick="loadOrders()" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black hover:bg-zinc-100">Refresh List</button>
         </div>
         <div id="ordersGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
       </div>
@@ -225,9 +233,9 @@
     <section id="marketplace" class="section">
       <div class="mx-auto max-w-6xl px-4 py-8">
         <div class="mb-6">
-          <p class="text-xs font-black uppercase tracking-wider text-red-600">Marketplace</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Community brick ideas</h2>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">Explore authentic designs submitted by the TangiblX community.</p>
+          <p class="text-xs font-black uppercase tracking-wider text-red-600">Community Showcase</p>
+          <h2 class="mt-2 text-3xl font-black tracking-tight">Shared Bricks Gallery</h2>
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">Browse custom shapes and ideas published by builders all around the community.</p>
         </div>
         <div id="marketplaceGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
       </div>
@@ -307,8 +315,8 @@
     function setAuthMode(mode) {
       authMode = mode;
       const loginActive = mode === "login";
-      document.getElementById("authTitle").innerText = loginActive ? "Log in to TangiblX" : "Create your TangiblX account";
-      document.getElementById("authSubmitBtn").innerText = loginActive ? "Log in" : "Create account";
+      document.getElementById("authTitle").innerText = loginActive ? "Log in to Your Account" : "Create Your Free Account";
+      document.getElementById("authSubmitBtn").innerText = loginActive ? "Log in" : "Create Account";
       document.getElementById("loginTab").className = loginActive ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
       document.getElementById("signupTab").className = !loginActive ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
       document.getElementById("authMessage").innerText = "";
@@ -320,11 +328,11 @@
       const authMessage = document.getElementById("authMessage");
 
       if (!email || !password) {
-        authMessage.innerText = "Enter an email and password.";
+        authMessage.innerText = "Please complete both fields.";
         return;
       }
 
-      authMessage.innerText = authMode === "login" ? "Logging in..." : "Creating account...";
+      authMessage.innerText = authMode === "login" ? "Logging in..." : "Setting up your account...";
       const authCall = authMode === "login"
         ? supabaseClient.auth.signInWithPassword({ email, password })
         : supabaseClient.auth.signUp({ email, password });
@@ -337,7 +345,7 @@
 
       activeUser = data.session?.user || null;
       authMessage.innerText = authMode === "signup" && !data.session
-        ? "Account created. Check your email if confirmation is enabled."
+        ? "Account setup complete! Please check your email inbox if verification is required."
         : "Success.";
       updateAuthUI();
       if (activeUser) showSection("workshop");
@@ -374,7 +382,7 @@
       const promptVal = promptInput.value.trim();
       
       if (!promptVal && !base64ImageData) {
-        alert("Please supply a text description, a reference image, or both.");
+        alert("Please provide either a text description or a photo pattern.");
         return;
       }
 
@@ -399,7 +407,7 @@
       spinner.classList.remove("hidden");
       taskBadge.classList.add("hidden");
       shipMessage.innerText = "";
-      statusText.innerText = "Preparing your TangiblX request...";
+      statusText.innerText = "Connecting to generation pipeline...";
 
       let requestPayload;
       if (base64ImageData) {
@@ -428,12 +436,12 @@
         const data = await response.json();
         const taskId = data.task_id || (data.data && data.data.task_id);
 
-        if (!taskId) throw new Error(data.message || data.error || "Failed to launch the generation task.");
+        if (!taskId) throw new Error(data.message || data.error || "Failed to start the generator.");
 
         currentTaskId = taskId;
-        taskBadge.innerText = `Task ${taskId}`;
+        taskBadge.innerText = `ID: ${taskId}`;
         taskBadge.classList.remove("hidden");
-        statusText.innerText = "Task accepted. Building the model...";
+        statusText.innerText = "Request received! Generating shape geometry...";
         pollStatus(taskId);
       } catch (err) {
         statusText.innerText = "Error: " + err.message;
@@ -546,8 +554,8 @@
           const currentStatus = task.status || result.status;
           
           if (!currentStatus) {
-            console.error("Raw unparseable response:", result);
-            statusText.innerText = "Synchronizing with generation pipeline...";
+            console.error("Raw tracking structure:", result);
+            statusText.innerText = "Syncing pipeline stream...";
             return;
           }
 
@@ -555,7 +563,7 @@
 
           if (currentStatus === "success" || currentStatus === "COMPLETED") {
             clearInterval(interval);
-            statusText.innerText = "Model complete. Loading preview...";
+            statusText.innerText = "Shape calculated! Processing object rendering view...";
 
             const taskOutput = task.output || result.output;
             
@@ -567,7 +575,7 @@
               }
             }
             
-            if (!rawModelUrl) throw new Error("Finished model download URL missing from response.");
+            if (!rawModelUrl) throw new Error("Finished asset cloud location data was empty.");
 
             currentRawModelUrl = rawModelUrl;
             
@@ -589,10 +597,10 @@
             statsLoader.parse(globalGlbBuffer, "", function(gltf) {
               calculatePrintStats(gltf.scene);
             }, function(err) {
-              console.warn("Could not calculate background mesh dimensions:", err);
+              console.warn("Could not index 3D component metrics:", err);
             });
 
-            statusText.innerText = "Complete. Save your design or send it for printing and shipping.";
+            statusText.innerText = "Completed! Choose an action below to store or ship your custom item.";
             spinner.classList.add("hidden");
             viewerArea.classList.remove("hidden");
             
@@ -608,7 +616,7 @@
             promptInput.disabled = false;
             imageInput.disabled = false;
           } else {
-            statusText.innerText = `Generating custom brick geometry... (${currentProgress}%)`;
+            statusText.innerText = `Building your piece... (${currentProgress}%)`;
           }
         } catch (err) {
           clearInterval(interval);
@@ -632,13 +640,13 @@
         return;
       }
       if (!currentRawModelUrl) {
-        shipMessage.innerText = "Please generate a 3D model first.";
+        shipMessage.innerText = "Please build your model configuration first.";
         return;
       }
 
       shipBtn.disabled = true;
       saveBtn.disabled = true;
-      shipMessage.innerText = "Uploading model to secure cloud vault...";
+      shipMessage.innerText = "Saving data into your secure vault container...";
 
       try {
         const cloudTransferResponse = await fetch(`${BACKEND_BASE_URL}/save-to-storage`, {
@@ -653,7 +661,7 @@
 
         const transferData = await cloudTransferResponse.json();
         if (!cloudTransferResponse.ok || !transferData.success) {
-          throw new Error(transferData.error || "Cloud asset streaming procedure failed.");
+          throw new Error(transferData.error || "Could not pass object data assets into storage bucket.");
         }
 
         const dimsString = rawMetricsCache 
@@ -662,60 +670,106 @@
 
         const { error: insertError } = await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
-          prompt: lastPrompt || "Image-based LEGO-style design",
+          prompt: lastPrompt || "Custom Building Piece",
           input_type: lastInputType,
           model_path: transferData.modelPath,
           model_url: transferData.modelUrl,
           status: targetStatus,
-          scale_dimensions: dimsString
+          scale_dimensions: dimsString,
+          marketplace_title: lastPrompt || "Custom Building Piece",
+          marketplace_description: "A unique design generated in the TangiblX workshop."
         });
 
         if (insertError) throw insertError;
 
         shipMessage.innerText = targetStatus === 'ordered' 
-          ? "Demo shipment processed successfully! Added to your gallery portfolio."
-          : "Design configuration saved successfully to your cloud profile!";
+          ? "Item ordered successfully! Track progress inside your personal dashboard folder."
+          : "Item structure has been safely logged into your saved collection!";
         
         loadOrders();
       } catch (err) {
-        shipMessage.innerText = "Error completing operation: " + err.message;
+        shipMessage.innerText = "Process error: " + err.message;
       } finally {
         shipBtn.disabled = false;
         saveBtn.disabled = false;
       }
     }
 
-    function convertAndDownloadSTL(buffer, filename) {
-      if (!buffer) return;
-      const loader = new THREE.GLTFLoader();
-      loader.parse(buffer, "", function(gltf) {
-        const exporter = new THREE.STLExporter();
-        const result = exporter.parse(gltf.scene, { binary: true });
-        const blob = new Blob([result], { type: "application/sla" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-      });
+    async function updateOrderStatusDirectly(orderId, nextStatus) {
+      const { error } = await supabaseClient
+        .from("lego_orders")
+        .update({ status: nextStatus })
+        .eq("id", orderId)
+        .eq("user_id", activeUser.id);
+
+      if (error) {
+        alert("Could not complete order layout changes: " + error.message);
+        return;
+      }
+      loadOrders();
     }
 
-    async function downloadOrderModelById(orderId) {
-      const order = orderCache[orderId];
-      if (!order || !order.model_url) return;
-      const response = await fetch(order.model_url);
-      const buffer = await response.arrayBuffer();
-      convertAndDownloadSTL(buffer, `tangiblex-item-${orderId}.stl`);
+    async function editLocalGalleryTitle(orderId) {
+      const currentOrder = orderCache[orderId];
+      if (!currentOrder) return;
+      
+      const newTitle = prompt("Change item display name:", currentOrder.prompt);
+      if (newTitle === null || newTitle.trim() === "") return;
+
+      const { error } = await supabaseClient
+        .from("lego_orders")
+        .update({ prompt: newTitle.trim() })
+        .eq("id", orderId)
+        .eq("user_id", activeUser.id);
+
+      if (error) {
+        alert("Failed to update item display name: " + error.message);
+        return;
+      }
+      loadOrders();
+    }
+
+    async function editMarketplaceListingTitle(orderId) {
+      const { data, error: fetchError } = await supabaseClient
+        .from("lego_orders")
+        .select("marketplace_title, user_id")
+        .eq("id", orderId)
+        .single();
+
+      if (fetchError || !data) {
+        alert("Could not load shared catalog details.");
+        return;
+      }
+
+      if (data.user_id !== activeUser?.id) {
+        alert("You can only modify public names on items you created.");
+        return;
+      }
+
+      const newMarketName = prompt("Change this item's public name in the gallery showcase:", data.marketplace_title);
+      if (newMarketName === null || newMarketName.trim() === "") return;
+
+      const { error } = await supabaseClient
+        .from("lego_orders")
+        .update({ marketplace_title: newMarketName.trim() })
+        .eq("id", orderId)
+        .eq("user_id", activeUser.id);
+
+      if (error) {
+        alert("Failed to alter public gallery label: " + error.message);
+        return;
+      }
+      loadMarketplace();
     }
 
     async function loadOrders() {
       const grid = document.getElementById("ordersGrid");
       if (!activeUser) {
-        grid.innerHTML = emptyState("Log in to see your creations.");
+        grid.innerHTML = emptyState("Please log in to see your collection archive.");
         return;
       }
 
-      grid.innerHTML = emptyState("Loading your gallery catalog...");
+      grid.innerHTML = emptyState("Opening your private design catalog shelf...");
       const { data, error } = await supabaseClient
         .from("lego_orders")
         .select("*")
@@ -723,12 +777,12 @@
         .order("created_at", { ascending: false });
 
       if (error) {
-        grid.innerHTML = emptyState(`Gallery load error: ${error.message}`);
+        grid.innerHTML = emptyState(`Failed to open collection: ${error.message}`);
         return;
       }
 
       if (!data || !data.length) {
-        grid.innerHTML = emptyState("Your gallery is empty. Head to the workshop to save designs or place demo orders.");
+        grid.innerHTML = emptyState("Your workspace is empty! Use the 'Create' studio block to build or order your first item configuration.");
         return;
       }
 
@@ -742,60 +796,92 @@
       const savedDimensions = escapeHtml(order.scale_dimensions || "1.0x baseline");
       
       const isOrdered = order.status === "ordered" || order.status === "demo_shipped";
-      const statusBadgeClass = isOrdered 
-        ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
-        : "bg-blue-100 text-blue-800 border-blue-200";
-      const badgeText = isOrdered ? "📦 Shipped Order" : "💾 Saved Design";
+      
+      // Tracking configurations for our 2 hover tooltip icons
+      const orderBadgeColor = isOrdered ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-blue-100 text-blue-800 border-blue-200";
+      const orderTooltip = isOrdered ? "Order Status: Shipped & Processing" : "Order Status: Saved Template Design Only";
+      const orderIcon = isOrdered ? "📦" : "💾";
+
+      const isPub = !!order.is_published;
+      const pubBadgeColor = isPub ? "bg-purple-100 text-purple-800 border-purple-200" : "bg-zinc-100 text-zinc-500 border-zinc-200";
+      const pubTooltip = isPub ? "Sharing Status: Published to Community Showcase" : "Sharing Status: Private to Your Vault Account";
+      const pubIcon = isPub ? "🌍" : "🔒";
 
       return `
         <article class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm relative flex flex-col justify-between">
           <div>
-            <div class="absolute top-6 right-6 z-10 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md border ${statusBadgeClass}">
-              ${badgeText}
+            <div class="absolute top-6 right-6 z-10 flex gap-2">
+              <div class="tooltip-container ${orderBadgeColor} h-7 w-7 flex items-center justify-center rounded-md border text-sm cursor-help">
+                ${orderIcon}
+                <span class="tooltip-text shadow-md font-semibold">${orderTooltip}</span>
+              </div>
+              <div class="tooltip-container ${pubBadgeColor} h-7 w-7 flex items-center justify-center rounded-md border text-sm cursor-help">
+                ${pubIcon}
+                <span class="tooltip-text shadow-md font-semibold">${pubTooltip}</span>
+              </div>
             </div>
-            ${order.model_url ? `<model-viewer src="${order.model_url}" camera-controls auto-rotate alt="${safePrompt}"></model-viewer>` : `<div class="flex h-[280px] items-center justify-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-400">Preview Unavailable</div>`}
+            ${order.model_url ? `<model-viewer src="${order.model_url}" camera-controls auto-rotate alt="${safePrompt}"></model-viewer>` : `<div class="flex h-[280px] items-center justify-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-400">Preview rendering unavailable</div>`}
             <div class="mt-4">
-              <h3 class="line-clamp-2 text-lg font-black pr-24">${safePrompt}</h3>
-              <p class="text-xs font-mono text-zinc-500 mt-1">Size: <span class="text-zinc-900 font-semibold">${savedDimensions}</span></p>
+              <div class="flex items-center justify-between gap-2 group">
+                <h3 class="line-clamp-2 text-lg font-black pr-16">${safePrompt}</h3>
+                <button onclick="editLocalGalleryTitle('${order.id}')" title="Edit name" class="p-1 rounded text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 cursor-pointer">
+                  ✏️
+                </button>
+              </div>
+              <p class="text-xs font-mono text-zinc-500 mt-1">Size metrics: <span class="text-zinc-900 font-semibold">${savedDimensions}</span></p>
               <p class="text-[10px] font-bold text-zinc-400 mt-0.5">Created: ${dateText}</p>
             </div>
           </div>
           <div class="grid gap-2 sm:grid-cols-2 mt-4">
-            <button onclick="downloadOrderModelById('${order.id}')" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-black hover:bg-zinc-100">Download STL</button>
-            <button onclick="publishOrder('${order.id}')" class="rounded-md bg-zinc-900 px-3 py-2 text-sm font-black text-white hover:bg-zinc-700">${order.is_published ? "Update listing" : "Publish"}</button>
+            ${isOrdered 
+              ? `<div class="col-span-1 flex items-center justify-center rounded-md bg-zinc-100 text-zinc-500 border border-zinc-200 text-xs font-bold py-2">Ordered</div>`
+              : `<button onclick="updateOrderStatusDirectly('${order.id}', 'ordered')" class="rounded-md bg-emerald-600 text-white px-3 py-2 text-sm font-black hover:bg-emerald-500">Order item</button>`
+            }
+            <button onclick="togglePublishState('${order.id}')" class="rounded-md bg-zinc-900 px-3 py-2 text-sm font-black text-white hover:bg-zinc-700">${isPub ? "Make Private" : "Share with Public"}</button>
           </div>
         </article>
       `;
     }
 
-    async function publishOrder(orderId) {
-      const title = prompt("Marketplace title for this design:");
-      if (!title) return;
-      const description = prompt("Short marketplace description:") || "";
+    async function togglePublishState(orderId) {
+      const order = orderCache[orderId];
+      if (!order) return;
+
+      const nextPubState = !order.is_published;
+      let title = order.marketplace_title || order.prompt;
+      let desc = order.marketplace_description || "A custom building piece idea.";
+
+      if (nextPubState && (!order.marketplace_title || order.marketplace_title === order.prompt)) {
+        const inputTitle = prompt("Enter a shared display name for the Public Gallery Showcase:", title);
+        if (inputTitle === null) return; 
+        if (inputTitle.trim() !== "") {
+          title = inputTitle.trim();
+        }
+        desc = prompt("Enter a brief description for other community members:", desc) || desc;
+      }
 
       const { error } = await supabaseClient
         .from("lego_orders")
         .update({
-          is_published: true,
+          is_published: nextPubState,
           marketplace_title: title,
-          marketplace_description: description
+          marketplace_description: desc
         })
         .eq("id", orderId)
         .eq("user_id", activeUser.id);
 
       if (error) {
-        alert("Could not publish design: " + error.message);
+        alert("Failed to modify public sharing parameters: " + error.message);
         return;
       }
 
       await loadOrders();
       await loadMarketplace();
-      alert("Design published to the TangiblX marketplace.");
     }
 
     async function loadMarketplace() {
       const grid = document.getElementById("marketplaceGrid");
-      grid.innerHTML = emptyState("Loading published designs...");
+      grid.innerHTML = emptyState("Refreshing gallery showcase stream...");
 
       const { data, error } = await supabaseClient
         .from("lego_orders")
@@ -804,12 +890,12 @@
         .order("created_at", { ascending: false });
 
       if (error) {
-        grid.innerHTML = emptyState(`Published designs could not load: ${error.message}`);
+        grid.innerHTML = emptyState(`Failed to open public showcase matrix: ${error.message}`);
         return;
       }
 
       if (!data || !data.length) {
-        grid.innerHTML = emptyState("No community designs have been published yet. Be the first to publish one!");
+        grid.innerHTML = emptyState("No designs have been shared yet! Go to your saved designs folder to publish your project ideas.");
         return;
       }
 
@@ -817,13 +903,24 @@
     }
 
     function marketplaceCard(order) {
-      const title = escapeHtml(order.marketplace_title || order.prompt || "Published TangiblX design");
-      const description = escapeHtml(order.marketplace_description || "A community-published LEGO-style demo design.");
+      const title = escapeHtml(order.marketplace_title || order.prompt || "Shared Community Piece");
+      const description = escapeHtml(order.marketplace_description || "A custom-shaped component idea.");
+      const isOwner = activeUser && order.user_id === activeUser.id;
+
       return `
         <article class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          ${order.model_url ? `<model-viewer src="${order.model_url}" camera-controls auto-rotate alt="${title}"></model-viewer>` : `<div class="flex h-[280px] items-center justify-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-400">No model preview</div>`}
-          <h3 class="mt-4 text-lg font-black">${title}</h3>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">${description}</p>
+          ${order.model_url ? `<model-viewer src="${order.model_url}" camera-controls auto-rotate alt="${title}"></model-viewer>` : `<div class="flex h-[280px] items-center justify-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-400">Preview rendering unavailable</div>`}
+          <div class="mt-4">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-lg font-black line-clamp-1">${title}</h3>
+              ${isOwner ? `
+                <button onclick="editMarketplaceListingTitle('${order.id}')" title="Change shared marketplace name" class="p-1 rounded text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 cursor-pointer">
+                  ✏️
+                </button>
+              ` : ""}
+            </div>
+            <p class="mt-2 text-sm leading-6 text-zinc-600 line-clamp-3">${description}</p>
+          </div>
         </article>
       `;
     }
