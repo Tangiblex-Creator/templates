@@ -28,7 +28,7 @@
 
       <nav id="appNav" class="hidden items-center gap-2">
         <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="workshop" onclick="showSection('workshop')">Workshop</button>
-        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="orders" onclick="showSection('orders')">Orders</button>
+        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="orders" onclick="showSection('orders')">Designs & Orders</button>
         <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="marketplace" onclick="showSection('marketplace')">Marketplace</button>
       </nav>
 
@@ -200,8 +200,8 @@
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2">
-              <button id="downloadBtn" class="rounded-md border border-zinc-300 px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
-              <button id="shipBtn" onclick="shipCurrentDesign()" class="rounded-md bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Send for shipping</button>
+              <button id="saveDesignBtn" onclick="persistDesign('saved')" class="rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Save Design</button>
+              <button id="shipBtn" onclick="persistDesign('ordered')" class="rounded-md bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Send for shipping</button>
             </div>
             <p id="shipMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
           </div>
@@ -213,8 +213,8 @@
       <div class="mx-auto max-w-6xl px-4 py-8">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p class="text-xs font-black uppercase tracking-wider text-red-600">Orders</p>
-            <h2 class="mt-2 text-3xl font-black tracking-tight">Your saved designs</h2>
+            <p class="text-xs font-black uppercase tracking-wider text-red-600">Your Gallery</p>
+            <h2 class="mt-2 text-3xl font-black tracking-tight">Saved Designs & Orders</h2>
           </div>
           <button onclick="loadOrders()" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black hover:bg-zinc-100">Refresh</button>
         </div>
@@ -238,7 +238,6 @@
     const SUPABASE_URL = "https://lfvtqvszgmqxgznupopr.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmdnRxdnN6Z21xeGd6bnVwb3ByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjQ4NDYsImV4cCI6MjA5NjUwMDg0Nn0.712348spxVxGS8dwzD7u2M5NuCMqbYEASPD4YxsPYE0";
     const BACKEND_BASE_URL = "https://tangiblx-backend-2fhn.onrender.com";
-    const STORAGE_BUCKET = "lego-models";
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const dummyDesigns = [
@@ -261,8 +260,8 @@
     let lastInputType = "";
     let orderCache = {};
     
-    let rawMetricsCache = null; // Ground-truth baseline size object
-    let activeThreeScene = null; // Handle referencing loaded mesh geometry parameters directly
+    let rawMetricsCache = null; 
+    let activeThreeScene = null;
 
     document.addEventListener("DOMContentLoaded", initializeApp);
 
@@ -456,24 +455,18 @@
 
     function calculatePrintStats(scene) {
       activeThreeScene = scene;
-      
-      // Pull current modifier value from the input slider
       const scaleMultiplier = parseFloat(document.getElementById("scaleSlider").value || 1.0);
 
       const box = new THREE.Box3().setFromObject(scene);
       const size = new THREE.Vector3();
       box.getSize(size);
 
-      // 1. Calculate size incorporating user's slider choice
       const baseScaleX = size.x * 10 * scaleMultiplier;
       const baseScaleY = size.y * 10 * scaleMultiplier;
       const baseScaleZ = size.z * 10 * scaleMultiplier;
 
-      // 2. Volume math based on scaling laws
       const boundingVolumeCm3 = (baseScaleX * baseScaleY * baseScaleZ) / 1000;
       const estimatedMeshVolumeCm3 = boundingVolumeCm3 * 0.4;
-
-      // 3. Extrapolate density weight and filament manufacturing pricing targets
       const estimatedWeightGrams = estimatedMeshVolumeCm3 * 1.24;
       const estimatedCostUSD = estimatedWeightGrams * 0.025;
 
@@ -483,7 +476,8 @@
         mmZ: baseScaleZ,
         volumeCm3: estimatedMeshVolumeCm3,
         weightGrams: estimatedWeightGrams,
-        costUSD: estimatedCostUSD
+        costUSD: estimatedCostUSD,
+        scaleFactor: scaleMultiplier
       };
 
       updateDisplayedUnits();
@@ -493,7 +487,6 @@
     function handleScaleAdjustment(val) {
       document.getElementById("scaleDisplay").innerText = `${parseFloat(val).toFixed(1)}x`;
       
-      // Update the visual model-viewer element's scale matrix dynamically
       const viewer = document.getElementById("3dPreview");
       if (viewer) {
         viewer.style.transform = `scale(${Math.min(1.3, 0.7 + (val * 0.1))})`; 
@@ -549,7 +542,6 @@
       const viewerArea = document.getElementById("viewerArea");
       const viewer = document.getElementById("3dPreview");
       const genBtn = document.getElementById("generateBtn");
-      const downloadBtn = document.getElementById("downloadBtn");
       const promptInput = document.getElementById("prompt");
       const imageInput = document.getElementById("imageInput");
 
@@ -583,9 +575,7 @@
             globalGlbBuffer = await fileResponse.arrayBuffer();
             currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
             viewer.src = currentBlobUrl;
-            downloadBtn.onclick = () => convertAndDownloadSTL();
 
-            // Set default base scale slider tracker index back to neutral baseline
             document.getElementById("scaleSlider").value = "1.0";
             document.getElementById("scaleDisplay").innerText = "1.0x";
             viewer.style.transform = "none";
@@ -597,7 +587,7 @@
               console.warn("Could not calculate background mesh dimensions:", err);
             });
 
-            statusText.innerText = "Complete. Review the model, download it, or save it as a demo shipment.";
+            statusText.innerText = "Complete. Save your design or send it for printing and shipping.";
             spinner.classList.add("hidden");
             viewerArea.classList.remove("hidden");
             
@@ -627,21 +617,24 @@
       }, 4000);
     }
 
-    async function shipCurrentDesign() {
+    // UNIFIED PERSISTENCE ROUTINE: Handles both saving and shipping with exact custom dimensions captured
+    async function persistDesign(targetStatus) {
       const shipMessage = document.getElementById("shipMessage");
       const shipBtn = document.getElementById("shipBtn");
+      const saveBtn = document.getElementById("saveDesignBtn");
       
       if (!activeUser) {
         showSection("auth");
         return;
       }
       if (!currentRawModelUrl) {
-        shipMessage.innerText = "Generate a model before sending it for shipping.";
+        shipMessage.innerText = "Please generate a 3D model first.";
         return;
       }
 
       shipBtn.disabled = true;
-      shipMessage.innerText = "Streaming model directly from cloud to cloud storage...";
+      saveBtn.disabled = true;
+      shipMessage.innerText = "Uploading model to secure cloud vault...";
 
       try {
         const cloudTransferResponse = await fetch(`${BACKEND_BASE_URL}/save-to-storage`, {
@@ -659,44 +652,40 @@
           throw new Error(transferData.error || "Cloud asset streaming procedure failed.");
         }
 
+        // Format dimensions string securely to save to database
+        const dimsString = rawMetricsCache 
+          ? `${rawMetricsCache.mmX.toFixed(1)}x${rawMetricsCache.mmY.toFixed(1)}x${rawMetricsCache.mmZ.toFixed(1)} mm (${rawMetricsCache.scaleFactor.toFixed(1)}x)`
+          : "1.0x baseline";
+
         const { error: insertError } = await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
           prompt: lastPrompt || "Image-based LEGO-style design",
           input_type: lastInputType,
           model_path: transferData.modelPath,
           model_url: transferData.modelUrl,
-          status: "demo_shipped"
+          status: targetStatus, // Saves either 'saved' or 'ordered'
+          scale_dimensions: dimsString
         });
 
         if (insertError) throw insertError;
 
-        if (globalGlbBuffer) {
-          convertAndDownloadSTL();
-        }
-
-        shipMessage.innerText = "Demo shipment saved instantly! The local STL download has started.";
+        shipMessage.innerText = targetStatus === 'ordered' 
+          ? "Demo shipment processed successfully! Added to your gallery portfolio."
+          : "Design configuration saved successfully to your cloud profile!";
+        
         loadOrders();
       } catch (err) {
-        shipMessage.innerText = "Could not save order safely: " + err.message;
+        shipMessage.innerText = "Error completing operation: " + err.message;
       } finally {
         shipBtn.disabled = false;
+        saveBtn.disabled = false;
       }
     }
 
-    function convertAndDownloadSTL(buffer = globalGlbBuffer, filename = `tangiblex-${currentTaskId || "model"}.stl`) {
-      if (!buffer) {
-        alert("Model buffer empty.");
-        return;
-      }
-
-      const scaleMultiplier = parseFloat(document.getElementById("scaleSlider").value || 1.0);
+    function convertAndDownloadSTL(buffer, filename) {
+      if (!buffer) return;
       const loader = new THREE.GLTFLoader();
-      
       loader.parse(buffer, "", function(gltf) {
-        // Apply slider scaling factor directly to geometry vectors on export path
-        gltf.scene.scale.set(scaleMultiplier, scaleMultiplier, scaleMultiplier);
-        gltf.scene.updateMatrixWorld(true);
-
         const exporter = new THREE.STLExporter();
         const result = exporter.parse(gltf.scene, { binary: true });
         const blob = new Blob([result], { type: "application/sla" });
@@ -705,26 +694,25 @@
         link.download = filename;
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-      }, function(error) {
-        alert("STL export error: " + error.message);
       });
     }
 
-    async function downloadOrderModel(order) {
-      if (!order.model_url) return;
+    async function downloadOrderModelById(orderId) {
+      const order = orderCache[orderId];
+      if (!order || !order.model_url) return;
       const response = await fetch(order.model_url);
       const buffer = await response.arrayBuffer();
-      convertAndDownloadSTL(buffer, `tangiblex-order-${order.id}.stl`);
+      convertAndDownloadSTL(buffer, `tangiblex-item-${orderId}.stl`);
     }
 
     async function loadOrders() {
       const grid = document.getElementById("ordersGrid");
       if (!activeUser) {
-        grid.innerHTML = emptyState("Log in to see saved orders.");
+        grid.innerHTML = emptyState("Log in to see your creations.");
         return;
       }
 
-      grid.innerHTML = emptyState("Loading your orders...");
+      grid.innerHTML = emptyState("Loading your gallery catalog...");
       const { data, error } = await supabaseClient
         .from("lego_orders")
         .select("*")
@@ -732,12 +720,12 @@
         .order("created_at", { ascending: false });
 
       if (error) {
-        grid.innerHTML = emptyState(`Orders could not load: ${error.message}`);
+        grid.innerHTML = emptyState(`Gallery load error: ${error.message}`);
         return;
       }
 
       if (!data || !data.length) {
-        grid.innerHTML = emptyState("No demo orders yet. Generate a model in the Workshop and send it for shipping.");
+        grid.innerHTML = emptyState("Your gallery is empty. Head to the workshop to save designs or place demo orders.");
         return;
       }
 
@@ -746,32 +734,36 @@
     }
 
     function orderCard(order) {
-      const safePrompt = escapeHtml(order.prompt || "Untitled LEGO-style design");
-      const dateText = order.created_at ? new Date(order.created_at).toLocaleString() : "Saved order";
+      const safePrompt = escapeHtml(order.prompt || "Untitled Configuration");
+      const dateText = order.created_at ? new Date(order.created_at).toLocaleDateString() : "Recent";
+      const savedDimensions = escapeHtml(order.scale_dimensions || "1.0x baseline");
+      
+      // Determine badge color coding properties dynamically based on status state
+      const isOrdered = order.status === "ordered" || order.status === "demo_shipped";
+      const statusBadgeClass = isOrdered 
+        ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
+        : "bg-blue-100 text-blue-800 border-blue-200";
+      const badgeText = isOrdered ? "📦 Shipped Order" : "💾 Saved Design";
+
       return `
-        <article class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          ${order.model_url ? `<model-viewer src="${order.model_url}" camera-controls auto-rotate alt="${safePrompt}"></model-viewer>` : `<div class="flex h-[280px] items-center justify-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-400">No model preview</div>`}
-          <div class="mt-4 space-y-3">
-            <div>
-              <h3 class="line-clamp-2 text-lg font-black">${safePrompt}</h3>
-              <p class="mt-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">${escapeHtml(order.status || "demo_shipped")} - ${dateText}</p>
+        <article class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm relative flex flex-col justify-between">
+          <div>
+            <div class="absolute top-6 right-6 z-10 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md border ${statusBadgeClass}">
+              ${badgeText}
             </div>
-            <div class="grid gap-2 sm:grid-cols-2">
-              <button onclick="downloadOrderModelById('${order.id}')" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-black hover:bg-zinc-100">Download STL</button>
-              <button onclick="publishOrder('${order.id}')" class="rounded-md bg-zinc-900 px-3 py-2 text-sm font-black text-white hover:bg-zinc-700">${order.is_published ? "Update listing" : "Publish"}</button>
+            ${order.model_url ? `<model-viewer src="${order.model_url}" camera-controls auto-rotate alt="${safePrompt}"></model-viewer>` : `<div class="flex h-[280px] items-center justify-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-400">Preview Unavailable</div>`}
+            <div class="mt-4">
+              <h3 class="line-clamp-2 text-lg font-black pr-24">${safePrompt}</h3>
+              <p class="text-xs font-mono text-zinc-500 mt-1">Size: <span class="text-zinc-900 font-semibold">${savedDimensions}</span></p>
+              <p class="text-[10px] font-bold text-zinc-400 mt-0.5">Created: ${dateText}</p>
             </div>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-2 mt-4">
+            <button onclick="downloadOrderModelById('${order.id}')" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-black hover:bg-zinc-100">Download STL</button>
+            <button onclick="publishOrder('${order.id}')" class="rounded-md bg-zinc-900 px-3 py-2 text-sm font-black text-white hover:bg-zinc-700">${order.is_published ? "Update listing" : "Publish"}</button>
           </div>
         </article>
       `;
-    }
-
-    function downloadOrderModelById(orderId) {
-      const order = orderCache[orderId];
-      if (!order) {
-        alert("Order details are not loaded yet.");
-        return;
-      }
-      downloadOrderModel(order);
     }
 
     async function publishOrder(orderId) {
