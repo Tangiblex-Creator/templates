@@ -175,7 +175,14 @@
             </model-viewer>
 
             <div id="printStats" class="hidden rounded-lg bg-zinc-900 p-4 text-xs font-mono text-zinc-300 shadow-inner">
-              <p class="border-b border-zinc-800 pb-2 text-center font-black uppercase tracking-wider text-red-500">3D Print Metrics</p>
+              <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                <p class="font-black uppercase tracking-wider text-red-500">3D Print Metrics</p>
+                <select id="unitSelector" onchange="updateDisplayedUnits()" class="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-white outline-none focus:border-red-500">
+                  <option value="mm" selected>Millimeters (mm)</option>
+                  <option value="cm">Centimeters (cm)</option>
+                  <option value="in">Inches (in)</option>
+                </select>
+              </div>
               <div class="mt-2 grid grid-cols-2 gap-2">
                 <div>Dimensions: <span id="statSize" class="text-white font-bold">-</span></div>
                 <div>Est. Volume: <span id="statVolume" class="text-white font-bold">-</span></div>
@@ -245,6 +252,7 @@
     let lastPrompt = "";
     let lastInputType = "";
     let orderCache = {};
+    let rawMetricsCache = null; // Global cache layer tracking physical size properties across scales
 
     document.addEventListener("DOMContentLoaded", initializeApp);
 
@@ -439,37 +447,72 @@
     }
 
     function calculatePrintStats(scene) {
-      const printStatsDiv = document.getElementById("printStats");
+      const box = new THREE.Box3().setFromObject(scene);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+
+      // Convert typical engine bounding blocks directly to standard base millimeters
+      const rawX = size.x * 10;
+      const rawY = size.y * 10;
+      const rawZ = size.z * 10;
+
+      const boundingVolumeCm3 = (rawX * rawY * rawZ) / 1000;
+      const estimatedMeshVolumeCm3 = boundingVolumeCm3 * 0.4;
+      const estimatedWeightGrams = estimatedMeshVolumeCm3 * 1.24;
+      const estimatedCostUSD = estimatedWeightGrams * 0.025;
+
+      // Lock standard properties down inside global metric caching layout
+      rawMetricsCache = {
+        mmX: rawX,
+        mmY: rawY,
+        mmZ: rawZ,
+        volumeCm3: estimatedMeshVolumeCm3,
+        weightGrams: estimatedWeightGrams,
+        costUSD: estimatedCostUSD
+      };
+
+      // Trigger standard conversion formatter immediately
+      updateDisplayedUnits();
+      document.getElementById("printStats").classList.remove("hidden");
+    }
+
+    function updateDisplayedUnits() {
+      if (!rawMetricsCache) return;
+
+      const unit = document.getElementById("unitSelector").value;
       const statSize = document.getElementById("statSize");
       const statVolume = document.getElementById("statVolume");
       const statWeight = document.getElementById("statWeight");
       const statCost = document.getElementById("statCost");
 
-      // 1. Compute the bounding box dimensions of the 3D model
-      const box = new THREE.Box3().setFromObject(scene);
-      const size = new THREE.Vector3();
-      box.getSize(size);
+      let sizeText = "";
+      let volumeText = "";
 
-      // Convert engine scale markers to real-world millimeters
-      const widthX = (size.x * 10).toFixed(1);
-      const heightY = (size.y * 10).toFixed(1);
-      const depthZ = (size.z * 10).toFixed(1);
+      if (unit === "mm") {
+        sizeText = `${rawMetricsCache.mmX.toFixed(1)} x ${rawMetricsCache.mmY.toFixed(1)} x ${rawMetricsCache.mmZ.toFixed(1)} mm`;
+        volumeText = `${rawMetricsCache.volumeCm3.toFixed(2)} cm³`;
+      } 
+      else if (unit === "cm") {
+        const cmX = rawMetricsCache.mmX / 10;
+        const cmY = rawMetricsCache.mmY / 10;
+        const cmZ = rawMetricsCache.mmZ / 10;
+        sizeText = `${cmX.toFixed(2)} x ${cmY.toFixed(2)} x ${cmZ.toFixed(2)} cm`;
+        volumeText = `${rawMetricsCache.volumeCm3.toFixed(2)} cm³`;
+      } 
+      else if (unit === "in") {
+        const inX = rawMetricsCache.mmX * 0.0393701;
+        const inY = rawMetricsCache.mmY * 0.0393701;
+        const inZ = rawMetricsCache.mmZ * 0.0393701;
+        const volumeIn3 = rawMetricsCache.volumeCm3 * 0.0610237;
 
-      // 2. Calculate estimated volume based on bounding box fill density factor
-      const boundingVolumeCm3 = (widthX * heightY * depthZ) / 1000; 
-      const estimatedMeshVolume = boundingVolumeCm3 * 0.4; 
+        sizeText = `${inX.toFixed(2)} x ${inY.toFixed(2)} x ${inZ.toFixed(2)} in`;
+        volumeText = `${volumeIn3.toFixed(3)} in³`;
+      }
 
-      // 3. Extrapolate weight and filament pricing metrics
-      const estimatedWeightGrams = estimatedMeshVolume * 1.24;
-      const estimatedCostUSD = estimatedWeightGrams * 0.025;
-
-      // 4. Update the stats container
-      statSize.innerText = `${widthX} x ${heightY} x ${depthZ} mm`;
-      statVolume.innerText = `${estimatedMeshVolume.toFixed(2)} cm³`;
-      statWeight.innerText = `~${estimatedWeightGrams.toFixed(1)}g`;
-      statCost.innerText = `$${Math.max(0.05, estimatedCostUSD).toFixed(2)}`;
-
-      printStatsDiv.classList.remove("hidden");
+      statSize.innerText = sizeText;
+      statVolume.innerText = volumeText;
+      statWeight.innerText = `~${rawMetricsCache.weightGrams.toFixed(1)}g`;
+      statCost.innerText = `$${Math.max(0.05, rawMetricsCache.costUSD).toFixed(2)}`;
     }
 
     async function pollStatus(taskId) {
@@ -514,7 +557,7 @@
             viewer.src = currentBlobUrl;
             downloadBtn.onclick = () => convertAndDownloadSTL();
 
-            // Run dimensions background parsing task
+            // Background geometry scanner initialization point
             const statsLoader = new THREE.GLTFLoader();
             statsLoader.parse(globalGlbBuffer, "", function(gltf) {
               calculatePrintStats(gltf.scene);
