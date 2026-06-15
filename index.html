@@ -3,20 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TangiblX | Design Your Own Custom Bricks</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
+  <title>TangiblX Workshop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
   <style>
-    html { scroll-behavior: smooth; }
-    model-viewer { width: 100%; height: 280px; background: #111827; border-radius: 8px; }
-    .nav-btn[data-active="true"] { background: #111827; color: #ffffff; border-color: #334155; }
-    .section { display: none; }
+    /* Section Visibility Controller */
+    .section[data-visible="false"] { display: none; }
     .section[data-visible="true"] { display: block; }
     
-    /* Simple CSS Tooltip styling */
+    /* Navigation Active Tab Highlighter */
+    .nav-btn[data-active="true"] {
+      background-color: #18181b;
+      color: #ffffff;
+    }
+
+    /* Custom Tooltip Styling */
     .tooltip-container { position: relative; }
     .tooltip-text {
       visibility: hidden;
@@ -24,14 +29,14 @@
       bottom: 125%;
       left: 50%;
       transform: translateX(-50%);
-      background-color: #1f2937;
+      background-color: #18181b;
       color: #fff;
       text-align: center;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 11px;
       white-space: nowrap;
-      z-index: 50;
+      z-index: 20;
       opacity: 0;
       transition: opacity 0.2s;
     }
@@ -39,216 +44,229 @@
       visibility: visible;
       opacity: 1;
     }
+
+    model-viewer {
+      width: 100%;
+      height: 280px;
+      background-color: #f4f4f5;
+      border-radius: 0.5rem;
+    }
   </style>
 </head>
-<body class="min-h-screen bg-zinc-50 text-zinc-950">
-  <header class="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-      <button onclick="showSection('landing')" class="text-left">
-        <span class="block text-xl font-black tracking-tight text-red-600">TangiblX</span>
-        <span class="block text-xs font-semibold uppercase tracking-wider text-zinc-500">Custom Toy Creator</span>
-      </button>
+<body class="bg-zinc-50 text-zinc-900 font-sans antialiased min-h-screen flex flex-col">
 
-      <nav id="appNav" class="hidden items-center gap-2">
-        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="workshop" onclick="showSection('workshop')">Create</button>
-        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="orders" onclick="showSection('orders')">My Saved Designs</button>
-        <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="marketplace" onclick="showSection('marketplace')">Community Gallery</button>
-      </nav>
+  <header class="bg-white border-b border-zinc-200 sticky top-0 z-40 px-6 py-4 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="showSection('landing')">
+      <span class="text-2xl">🧱</span>
+      <h1 class="text-xl font-black tracking-tight text-zinc-900">Tangibl<span class="text-blue-600">X</span></h1>
+    </div>
 
-      <div class="flex items-center gap-2">
-        <span id="userEmail" class="hidden max-w-[180px] truncate text-sm font-medium text-zinc-500"></span>
-        <button id="loginTopBtn" onclick="showSection('auth')" class="rounded-md bg-zinc-900 px-4 py-2 text-sm font-bold text-white hover:bg-zinc-700">Log in</button>
-        <button id="logoutBtn" onclick="logout()" class="hidden rounded-md border border-zinc-300 px-4 py-2 text-sm font-bold text-zinc-700 hover:bg-zinc-100">Log out</button>
-      </div>
+    <nav id="appNav" class="hidden items-center gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200">
+      <button onclick="showSection('workshop')" data-target="workshop" class="nav-btn px-4 py-1.5 text-xs font-black rounded-md text-zinc-600 hover:text-zinc-900 transition-all">Workshop</button>
+      <button onclick="showSection('orders')" data-target="orders" class="nav-btn px-4 py-1.5 text-xs font-black rounded-md text-zinc-600 hover:text-zinc-900 transition-all">My Shelf</button>
+      <button onclick="showSection('marketplace')" data-target="marketplace" class="nav-btn px-4 py-1.5 text-xs font-black rounded-md text-zinc-600 hover:text-zinc-900 transition-all">Public Gallery</button>
+    </nav>
+
+    <div class="flex items-center gap-4">
+      <span id="userEmail" class="hidden text-xs font-mono font-bold bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md text-zinc-600"></span>
+      <button id="loginTopBtn" onclick="showSection('auth', 'login')" class="rounded-md bg-zinc-900 px-4 py-2 text-xs font-black text-white hover:bg-zinc-700 transition-all shadow-sm">Log In</button>
+      <button id="logoutBtn" onclick="logout()" class="hidden rounded-md bg-white border border-zinc-200 px-4 py-2 text-xs font-black text-zinc-700 hover:bg-zinc-100 transition-all">Sign Out</button>
     </div>
   </header>
 
-  <main>
-    <section id="landing" class="section" data-visible="true">
-      <div class="border-b border-zinc-200 bg-white">
-        <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6">
+
+    <section id="landing" class="section py-16 text-center" data-visible="true">
+      <div class="max-w-2xl mx-auto">
+        <span class="text-5xl inline-block mb-6 animate-bounce">✨</span>
+        <h2 class="text-4xl sm:text-5xl font-black tracking-tight text-zinc-900 mb-6 leading-tight">
+          Turn Simple Images into Custom Physical Objects
+        </h2>
+        <p class="text-base text-zinc-600 mb-8 leading-relaxed font-medium">
+          Upload reference pictures, apply modifications, calculate manufacturing parameters, and review your unique structures inside our interactive design space repository.
+        </p>
+        <div class="flex items-center justify-center gap-4">
+          <button onclick="showSection('workshop')" class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-black text-white hover:bg-blue-500 shadow-md shadow-blue-100 transition-all">
+            Enter Studio Workshop
+          </button>
+          <button onclick="showSection('marketplace')" class="rounded-lg bg-white border border-zinc-300 px-6 py-3 text-sm font-black text-zinc-700 hover:bg-zinc-50 transition-all">
+            Browse Shared Concepts
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="auth" class="section max-w-md mx-auto py-12" data-visible="false">
+      <div class="bg-white border border-zinc-200 rounded-xl shadow-xl p-8">
+        <div class="flex bg-zinc-100 p-1 rounded-lg border border-zinc-200 mb-6">
+          <button id="loginTab" onclick="setAuthMode('login')" class="flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm">Log In</button>
+          <button id="signupTab" onclick="setAuthMode('signup')" class="flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500">Sign Up</button>
+        </div>
+
+        <h3 id="authTitle" class="text-xl font-black text-zinc-900 mb-6">Log in to Your Account</h3>
+        
+        <form onsubmit="event.preventDefault(); submitAuth();" class="space-y-4">
           <div>
-            <p class="mb-4 inline-flex rounded-md bg-yellow-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-950">Make Your Own Custom Bricks</p>
-            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-zinc-950 md:text-6xl">Turn an idea or picture into a custom building piece.</h1>
-            <p class="mt-5 max-w-2xl text-lg leading-8 text-zinc-600">TangiblX makes it simple to design custom building toy pieces. Type a description, add a reference photo if you have one, view your custom piece in 3D, and save it directly to your account to order anytime.</p>
-            <div class="mt-8 flex flex-wrap gap-3">
-              <button onclick="showSection('auth', 'signup')" class="rounded-md bg-red-600 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500">Create account</button>
-              <button onclick="showSection('auth', 'login')" class="rounded-md border border-zinc-300 px-5 py-3 text-sm font-black text-zinc-900 hover:bg-zinc-100">Log in</button>
+            <label class="block text-xs font-black text-zinc-700 uppercase tracking-wider mb-2">Email Address</label>
+            <input id="authEmail" type="email" required class="w-full rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-black text-zinc-700 uppercase tracking-wider mb-2">Password</label>
+            <input id="authPassword" type="password" required class="w-full rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <button id="authSubmitBtn" type="submit" class="w-full rounded-md bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-500 shadow-md shadow-blue-100 transition-all mt-2">
+            Log In
+          </button>
+        </form>
+
+        <p id="authMessage" class="mt-4 text-center text-xs font-bold text-zinc-500 min-h-[1rem]"></p>
+      </div>
+    </section>
+
+    <section id="workshop" class="section" data-visible="false">
+      <div class="grid gap-8 lg:grid-cols-12 items-start">
+        
+        <div class="lg:col-span-5 bg-white border border-zinc-200 rounded-xl shadow-sm p-6 space-y-6">
+          <div>
+            <h2 class="text-xl font-black text-zinc-900">Design Studio Block</h2>
+            <p class="text-xs font-medium text-zinc-500 mt-0.5">Configure and construct custom physical building elements.</p>
+          </div>
+          <hr class="border-zinc-200">
+
+          <div class="space-y-2">
+            <label class="block text-xs font-black text-zinc-700 uppercase tracking-wider">Upload Pattern Reference Picture</label>
+            <div class="border-2 border-dashed border-zinc-200 rounded-lg p-4 bg-zinc-50 hover:bg-zinc-100 transition-all text-center relative">
+              <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+              <span class="text-2xl block mb-1">📷</span>
+              <span class="text-xs font-bold text-zinc-500">Drop file or click to select image asset location</span>
+            </div>
+            
+            <div id="imagePreviewContainer" class="hidden mt-3 p-2 bg-zinc-100 rounded-md border border-zinc-200 relative inline-block">
+              <img id="imgPreview" src="" alt="Workspace Pattern Source Link Location" class="h-20 w-auto rounded object-contain max-w-full">
             </div>
           </div>
 
-          <div class="rounded-lg border border-zinc-200 bg-zinc-100 p-5 shadow-sm">
-            <div class="grid grid-cols-5 gap-2">
-              <div class="h-16 rounded-md bg-red-500 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-yellow-300 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-blue-500 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-emerald-500 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-zinc-900 shadow-inner"></div>
-              <div class="col-span-2 h-28 rounded-md bg-white p-3 shadow-inner">
-                <div class="mb-3 h-5 w-5 rounded-full bg-red-500"></div>
-                <div class="h-3 w-20 rounded bg-zinc-300"></div>
-              </div>
-              <div class="col-span-3 h-28 rounded-md bg-yellow-300 p-3 shadow-inner">
-                <div class="flex gap-3">
-                  <span class="h-7 w-7 rounded-full bg-yellow-100"></span>
-                  <span class="h-7 w-7 rounded-full bg-yellow-100"></span>
-                  <span class="h-7 w-7 rounded-full bg-yellow-100"></span>
+          <div class="space-y-2">
+            <label class="block text-xs font-black text-zinc-700 uppercase tracking-wider">Adjustment Prompts & Notes</label>
+            <textarea id="prompt" rows="3" placeholder="Describe modifications (e.g., 'make the cup blue and add a Hello World inscription'). Leaving this empty creates an exact 3D copy of the image profile." class="w-full rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+          </div>
+
+          <button id="generateBtn" onclick="generate3DModel()" class="w-full rounded-md bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-500 shadow-md shadow-blue-100 transition-all">
+            Generate 3D Asset
+          </button>
+
+          <div id="pipelineStatus" class="space-y-3">
+            <div id="spinner" class="hidden flex items-center justify-center gap-3 p-4 bg-blue-50/50 border border-blue-100 rounded-lg">
+              <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+              <span class="text-xs font-black text-blue-800">Processing Pipeline Active</span>
+            </div>
+            <p id="statusText" class="text-xs font-medium text-zinc-500 text-center"></p>
+            <div class="text-center">
+              <span id="taskBadge" class="hidden inline-block text-[10px] font-mono font-bold bg-zinc-900 text-white px-2 py-0.5 rounded"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="viewerArea" class="hidden lg:col-span-7 space-y-6">
+          <div class="bg-white border border-zinc-200 rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-black text-zinc-900 uppercase tracking-wider">Interactive 3D Preview Frame</h3>
+              <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">Ready</span>
+            </div>
+            
+            <div class="bg-zinc-100 rounded-lg overflow-hidden border border-zinc-200 flex items-center justify-center relative min-h-[300px]">
+              <model-viewer id="3dPreview" camera-controls auto-rotate shadow-intensity="1" transform-box="box"></model-viewer>
+            </div>
+
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-black text-zinc-700 uppercase tracking-wider m-0">Scale Modifier</label>
+                  <span id="scaleDisplay" class="text-xs font-bold text-blue-600">1.0x</span>
                 </div>
-                <div class="mt-5 h-4 w-40 rounded bg-yellow-500/60"></div>
+                <input type="range" id="scaleSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="handleScaleAdjustment(this.value)" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
               </div>
-              <div class="col-span-5 h-24 rounded-md bg-blue-600 p-4 text-white shadow-inner">
-                <div class="h-4 w-48 rounded bg-blue-200/80"></div>
-                <div class="mt-3 h-3 w-64 max-w-full rounded bg-blue-300/70"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="auth" class="section">
-      <div class="mx-auto max-w-md px-4 py-14">
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <div class="mb-5 flex rounded-md bg-zinc-100 p-1">
-            <button id="loginTab" onclick="setAuthMode('login')" class="flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm">Log in</button>
-            <button id="signupTab" onclick="setAuthMode('signup')" class="flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500">Sign up</button>
-          </div>
-          <h2 id="authTitle" class="text-2xl font-black">Log in to Your Account</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Log in to safely save, edit, and order your custom building pieces.</p>
-          <div class="mt-5 space-y-4">
-            <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Email Address</label>
-              <input id="authEmail" type="email" autocomplete="email" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="you@example.com">
-            </div>
-            <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Password</label>
-              <input id="authPassword" type="password" autocomplete="current-password" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="At least 6 characters">
-            </div>
-            <button id="authSubmitBtn" onclick="submitAuth()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-500">Log in</button>
-            <p id="authMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="workshop" class="section">
-      <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[0.9fr_1.1fr]">
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <p class="text-xs font-black uppercase tracking-wider text-red-600">Design Studio</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Create a Custom Piece</h2>
-          <p class="mt-3 text-sm leading-6 text-zinc-600">Describe what you want to make, add a picture if you want, and our generator will build it into a 3D model for you.</p>
-
-          <div class="mt-6 space-y-5">
-            <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Add a Picture (Optional)</label>
-              <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="w-full rounded-md border border-dashed border-zinc-300 p-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
-              <div id="imagePreviewContainer" class="mt-3 hidden">
-                <img id="imgPreview" class="h-28 w-28 rounded-md border border-zinc-200 bg-zinc-100 object-contain p-1" alt="Uploaded snapshot template">
-              </div>
-            </div>
-
-            <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Describe Your Piece</label>
-              <textarea id="prompt" rows="5" class="w-full resize-none rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Example: A shiny red toy trophy piece with two handles and studs on top"></textarea>
-            </div>
-
-            <button id="generateBtn" onclick="generate3DModel()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Create 3D Model</button>
-          </div>
-        </div>
-
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Your Preview</p>
-              <h2 class="mt-2 text-2xl font-black">3D View</h2>
-            </div>
-            <span id="taskBadge" class="hidden rounded-md bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600"></span>
-          </div>
-
-          <div id="statusBox" class="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-5 text-center">
-            <div id="spinner" class="mx-auto mb-3 hidden h-7 w-7 animate-spin rounded-full border-[3px] border-red-600 border-t-transparent"></div>
-            <p id="statusText" class="text-sm font-semibold text-zinc-600">Your creation will show up here as soon as it finishes generating.</p>
-          </div>
-
-          <div id="viewerArea" class="mt-5 hidden space-y-4">
-            <model-viewer id="3dPreview" 
-                          camera-controls 
-                          auto-rotate 
-                          shadow-intensity="1.8" 
-                          shadow-softness="0.4"
-                          exposure="1.1"
-                          environment-image="neutral"
-                          interaction-prompt="none"
-                          alt="TangiblX custom created item">
-            </model-viewer>
-
-            <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-              <div class="flex items-center justify-between text-xs font-black uppercase tracking-wider text-zinc-500 mb-1">
-                <label for="scaleSlider">Size Multiplier</label>
-                <span id="scaleDisplay" class="font-mono text-red-600 bg-white border border-zinc-200 px-1.5 py-0.5 rounded">1.0x</span>
-              </div>
-              <input type="range" id="scaleSlider" min="0.5" max="5.0" step="0.1" value="1.0" oninput="handleScaleAdjustment(this.value)" class="w-full accent-red-600 cursor-pointer">
-            </div>
-
-            <div id="printStats" class="hidden rounded-lg bg-zinc-900 p-4 text-xs font-mono text-zinc-300 shadow-inner">
-              <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
-                <p class="font-black uppercase tracking-wider text-red-500">Item Details</p>
-                <select id="unitSelector" onchange="updateDisplayedUnits()" class="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-white outline-none focus:border-red-500">
-                  <option value="mm" selected>Millimeters (mm)</option>
+              <div>
+                <label class="block text-xs font-black text-zinc-700 uppercase tracking-wider mb-2">Display Unit System</label>
+                <select id="unitSelector" onchange="updateDisplayedUnits()" class="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 focus:outline-none">
+                  <option value="mm">Millimeters (mm)</option>
                   <option value="cm">Centimeters (cm)</option>
                   <option value="in">Inches (in)</option>
                 </select>
               </div>
-              <div class="mt-2 grid grid-cols-2 gap-2">
-                <div>Dimensions: <span id="statSize" class="text-white font-bold">-</span></div>
-                <div>Est. Volume: <span id="statVolume" class="text-white font-bold">-</span></div>
-                <div>Est. Weight: <span id="statWeight" class="text-white font-bold">-</span></div>
-                <div>Material Cost: <span id="statCost" class="text-yellow-400 font-bold">-</span></div>
+            </div>
+          </div>
+
+          <div id="printStats" class="hidden bg-white border border-zinc-200 rounded-xl shadow-sm p-6">
+            <h3 class="text-sm font-black text-zinc-900 uppercase tracking-wider mb-4">Fabrication Metrics</h3>
+            <div class="grid gap-4 grid-cols-2 sm:grid-cols-4">
+              <div class="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-center">
+                <span class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider">Dimensions</span>
+                <span id="statSize" class="text-xs font-bold text-zinc-800 block mt-1">-</span>
+              </div>
+              <div class="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-center">
+                <span class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider">Volume Estimation</span>
+                <span id="statVolume" class="text-xs font-bold text-zinc-800 block mt-1">-</span>
+              </div>
+              <div class="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-center">
+                <span class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider">Material Weight</span>
+                <span id="statWeight" class="text-xs font-bold text-zinc-800 block mt-1">-</span>
+              </div>
+              <div class="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-center">
+                <span class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider">Production Cost</span>
+                <span id="statCost" class="text-sm font-black text-emerald-600 block mt-0.5">-</span>
               </div>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2">
-              <button id="saveDesignBtn" onclick="persistDesign('saved')" class="rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Save Design</button>
-              <button id="shipBtn" onclick="persistDesign('ordered')" class="rounded-md bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Order and Ship</button>
+            <div class="mt-6 pt-6 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p id="shipMessage" class="text-xs font-bold text-zinc-500 max-w-sm"></p>
+              <div class="flex gap-2 w-full sm:w-auto">
+                <button id="saveDesignBtn" onclick="persistDesign('saved')" class="flex-1 sm:flex-initial rounded-md bg-zinc-900 text-white px-4 py-2.5 text-xs font-black hover:bg-zinc-700 transition-all">
+                  Save to Collection
+                </button>
+                <button id="shipBtn" onclick="persistDesign('ordered')" class="flex-1 sm:flex-initial rounded-md bg-emerald-600 text-white px-4 py-2.5 text-xs font-black hover:bg-emerald-500 transition-all shadow-md shadow-emerald-50">
+                  Order Fabricated Piece
+                </button>
+              </div>
             </div>
-            <p id="shipMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
           </div>
+
         </div>
       </div>
     </section>
 
-    <section id="orders" class="section">
-      <div class="mx-auto max-w-6xl px-4 py-8">
-        <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p class="text-xs font-black uppercase tracking-wider text-red-600">My Collection</p>
-            <h2 class="mt-2 text-3xl font-black tracking-tight">Your Saved Items & Orders</h2>
-          </div>
-          <button onclick="loadOrders()" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black hover:bg-zinc-100">Refresh List</button>
-        </div>
-        <div id="ordersGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+    <section id="orders" class="section" data-visible="false">
+      <div class="mb-6">
+        <h2 class="text-2xl font-black text-zinc-900">My Collection Shelf</h2>
+        <p class="text-sm font-medium text-zinc-500">Manage and browse your private repository of component designs.</p>
       </div>
+      <div id="ordersGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        </div>
     </section>
 
-    <section id="marketplace" class="section">
-      <div class="mx-auto max-w-6xl px-4 py-8">
-        <div class="mb-6">
-          <p class="text-xs font-black uppercase tracking-wider text-red-600">Community Showcase</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Shared Bricks Gallery</h2>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">Browse custom shapes and ideas published by builders all around the community.</p>
-        </div>
-        <div id="marketplaceGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+    <section id="marketplace" class="section" data-visible="false">
+      <div class="mb-6">
+        <h2 class="text-2xl font-black text-zinc-900">Public Gallery Showcase</h2>
+        <p class="text-sm font-medium text-zinc-500">Inspect custom structural configuration ideas published by community engineers.</p>
       </div>
+      <div id="marketplaceGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        </div>
     </section>
+
   </main>
+
+  <footer class="bg-white border-t border-zinc-200 py-6 text-center text-xs font-bold text-zinc-400">
+    &copy; 2026 TangiblX Custom Prototyping Platform Lab Inc. All rights reserved.
+  </footer>
 
   <script>
     const SUPABASE_URL = "https://lfvtqvszgmqxgznupopr.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmdnRxdnN6Z21xeGd6bnVwb3ByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjQ4NDYsImV4cCI6MjA5NjUwMDg0Nn0.712348spxVxGS8dwzD7u2M5NuCMqbYEASPD4YxsPYE0";
     const BACKEND_BASE_URL = "https://tangiblx-backend-2fhn.onrender.com";
-    
+
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
+
     let currentBlobUrl = null;
     let globalGlbBuffer = null;
     let currentTaskId = "";
@@ -259,16 +277,15 @@
     let lastPrompt = "";
     let lastInputType = "";
     let orderCache = {};
-    
+
     let rawMetricsCache = null; 
     let activeThreeScene = null;
-    
+
     document.addEventListener("DOMContentLoaded", initializeApp);
-    
+
     async function initializeApp() {
       setAuthMode("login");
       
-      // Guard initialization inside a try-catch block to prevent total script death if network fails
       try {
         const { data, error } = await supabaseClient.auth.getSession();
         if (error) throw error;
@@ -277,10 +294,10 @@
         console.error("Supabase initial session fetching failure:", initError);
         activeUser = null;
       }
-    
+
       updateAuthUI();
       showSection(activeUser ? "workshop" : "landing");
-    
+
       supabaseClient.auth.onAuthStateChange((_event, session) => {
         activeUser = session?.user || null;
         updateAuthUI();
@@ -291,13 +308,13 @@
         }
       });
     }
-    
+
     function updateAuthUI() {
       const nav = document.getElementById("appNav");
       const loginBtn = document.getElementById("loginTopBtn");
       const logoutBtn = document.getElementById("logoutBtn");
       const emailDisplay = document.getElementById("userEmail");
-    
+
       if (nav) {
         nav.classList.toggle("hidden", !activeUser);
         nav.classList.toggle("flex", !!activeUser);
@@ -309,27 +326,27 @@
         emailDisplay.innerText = activeUser?.email || "";
       }
     }
-    
+
     function showSection(sectionId, requestedAuthMode) {
       if (requestedAuthMode) setAuthMode(requestedAuthMode);
-    
+
       const protectedSections = ["workshop", "orders", "marketplace"];
       if (protectedSections.includes(sectionId) && !activeUser) {
         sectionId = "auth";
         setAuthMode("login");
       }
-    
+
       document.querySelectorAll(".section").forEach(section => {
         section.dataset.visible = section.id === sectionId ? "true" : "false";
       });
       document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.dataset.active = btn.dataset.target === sectionId ? "true" : "false";
       });
-    
+
       if (sectionId === "orders") loadOrders();
       if (sectionId === "marketplace") loadMarketplace();
     }
-    
+
     function setAuthMode(mode) {
       authMode = mode;
       const loginActive = mode === "login";
@@ -339,35 +356,35 @@
       const loginTab = document.getElementById("loginTab");
       const signupTab = document.getElementById("signupTab");
       const msg = document.getElementById("authMessage");
-    
+
       if (title) title.innerText = loginActive ? "Log in to Your Account" : "Create Your Free Account";
       if (btn) btn.innerText = loginActive ? "Log in" : "Create Account";
       if (loginTab) loginTab.className = loginActive ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
       if (signupTab) signupTab.className = !loginActive ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
       if (msg) msg.innerText = "";
     }
-    
+
     async function submitAuth() {
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value;
       const authMessage = document.getElementById("authMessage");
-    
+
       if (!email || !password) {
         authMessage.innerText = "Please complete both fields.";
         return;
       }
-    
+
       authMessage.innerText = authMode === "login" ? "Logging in..." : "Setting up your account...";
       const authCall = authMode === "login"
         ? supabaseClient.auth.signInWithPassword({ email, password })
         : supabaseClient.auth.signUp({ email, password });
-    
+
       const { data, error } = await authCall;
       if (error) {
         authMessage.innerText = error.message;
         return;
       }
-    
+
       activeUser = data.session?.user || null;
       authMessage.innerText = authMode === "signup" && !data.session
         ? "Account setup complete! If verification is required, please check your inbox."
@@ -375,18 +392,18 @@
       updateAuthUI();
       if (activeUser) showSection("workshop");
     }
-    
+
     async function logout() {
       await supabaseClient.auth.signOut();
       activeUser = null;
       updateAuthUI();
       showSection("landing");
     }
-    
+
     function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
-    
+
       const reader = new FileReader();
       reader.onload = function(e) {
         base64ImageData = e.target.result;
@@ -395,13 +412,13 @@
       };
       reader.readAsDataURL(file);
     }
-    
+
     async function generate3DModel() {
       if (!activeUser) {
         showSection("auth");
         return;
       }
-    
+
       const promptInput = document.getElementById("prompt");
       const imageInput = document.getElementById("imageInput");
       const promptVal = promptInput.value.trim();
@@ -410,20 +427,20 @@
         alert("Please provide either a text description or a photo pattern.");
         return;
       }
-    
+
       const genBtn = document.getElementById("generateBtn");
       const statusText = document.getElementById("statusText");
       const spinner = document.getElementById("spinner");
       const viewerArea = document.getElementById("viewerArea");
       const taskBadge = document.getElementById("taskBadge");
       const shipMessage = document.getElementById("shipMessage");
-    
+
       if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
       globalGlbBuffer = null;
       currentRawModelUrl = "";
       lastPrompt = promptVal;
       lastInputType = base64ImageData && promptVal ? "text_and_image" : (base64ImageData ? "image" : "text");
-    
+
       genBtn.disabled = true;
       promptInput.disabled = true;
       imageInput.disabled = true;
@@ -433,25 +450,16 @@
       taskBadge.classList.add("hidden");
       shipMessage.innerText = "";
       statusText.innerText = "Connecting to generation pipeline...";
-    
-      // FIXED PAYLOAD LOGIC: Dynamically targets correct pipeline for combining prompts + imagery
+
+      // Setup Request Payload to support hybrid image alterations dynamically on the backend proxy server
       let requestPayload;
-      if (base64ImageData && promptVal) {
-        requestPayload = {
-          type: "image_to_model", 
-          file: {
-            type: base64ImageData.split(";")[0].split(":")[1],
-            data: base64ImageData.split(",")[1]
-          },
-          model_orientation: "input", 
-          prompt: promptVal // Provided alongside image configuration parameters
-        };
-      } else if (base64ImageData) {
+      if (base64ImageData) {
         requestPayload = {
           type: "image_to_model",
+          prompt: promptVal, // Handed along to prompt-based 2D generation filters if verified text exists
           file: {
-            type: base64ImageData.split(";")[0].split(":")[1],
-            data: base64ImageData.split(",")[1]
+            type: "png",
+            url: base64ImageData
           }
         };
       } else {
@@ -460,23 +468,23 @@
           prompt: promptVal
         };
       }
-    
+
       try {
         const response = await fetch(`${BACKEND_BASE_URL}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestPayload)
         });
-    
+
         const data = await response.json();
         const taskId = data.task_id || (data.data && data.data.task_id);
-    
+
         if (!taskId) throw new Error(data.message || data.error || "Failed to start the generator.");
-    
+
         currentTaskId = taskId;
         taskBadge.innerText = `ID: ${taskId}`;
         taskBadge.classList.remove("hidden");
-        statusText.innerText = "Request received! Generating shape geometry..."; // Fixed mismatched syntax quote error
+        statusText.innerText = "Request received! Generating shape geometry...";
         pollStatus(taskId);
       } catch (err) {
         statusText.innerText = "Error: " + err.message;
@@ -487,24 +495,24 @@
         imageInput.disabled = false;
       }
     }
-    
+
     function calculatePrintStats(scene) {
       activeThreeScene = scene;
       const scaleMultiplier = parseFloat(document.getElementById("scaleSlider").value || 1.0);
-    
+
       const box = new THREE.Box3().setFromObject(scene);
       const size = new THREE.Vector3();
       box.getSize(size);
-    
+
       const baseScaleX = size.x * 10 * scaleMultiplier;
       const baseScaleY = size.y * 10 * scaleMultiplier;
       const baseScaleZ = size.z * 10 * scaleMultiplier;
-    
+
       const boundingVolumeCm3 = (baseScaleX * baseScaleY * baseScaleZ) / 1000;
       const estimatedMeshVolumeCm3 = boundingVolumeCm3 * 0.4;
       const estimatedWeightGrams = estimatedMeshVolumeCm3 * 1.24;
       const estimatedCostUSD = estimatedWeightGrams * 0.025;
-    
+
       rawMetricsCache = {
         mmX: baseScaleX,
         mmY: baseScaleY,
@@ -514,11 +522,11 @@
         costUSD: estimatedCostUSD,
         scaleFactor: scaleMultiplier
       };
-    
+
       updateDisplayedUnits();
       document.getElementById("printStats").classList.remove("hidden");
     }
-    
+
     function handleScaleAdjustment(val) {
       document.getElementById("scaleDisplay").innerText = `${parseFloat(val).toFixed(1)}x`;
       
@@ -526,24 +534,24 @@
       if (viewer) {
         viewer.style.transform = `scale(${Math.min(1.3, 0.7 + (val * 0.1))})`; 
       }
-    
+
       if (activeThreeScene) {
         calculatePrintStats(activeThreeScene);
       }
     }
-    
+
     function updateDisplayedUnits() {
       if (!rawMetricsCache) return;
-    
+
       const unit = document.getElementById("unitSelector").value;
       const statSize = document.getElementById("statSize");
       const statVolume = document.getElementById("statVolume");
       const statWeight = document.getElementById("statWeight");
       const statCost = document.getElementById("statCost");
-    
+
       let sizeText = "";
       let volumeText = "";
-    
+
       if (unit === "mm") {
         sizeText = `${rawMetricsCache.mmX.toFixed(1)} x ${rawMetricsCache.mmY.toFixed(1)} x ${rawMetricsCache.mmZ.toFixed(1)} mm`;
         volumeText = `${rawMetricsCache.volumeCm3.toFixed(2)} cm³`;
@@ -560,17 +568,17 @@
         const inY = rawMetricsCache.mmY * 0.0393701;
         const inZ = rawMetricsCache.mmZ * 0.0393701;
         const volumeIn3 = rawMetricsCache.volumeCm3 * 0.0610237;
-    
+
         sizeText = `${inX.toFixed(2)} x ${inY.toFixed(2)} x ${inZ.toFixed(2)} in`;
         volumeText = `${volumeIn3.toFixed(3)} in³`;
       }
-    
+
       statSize.innerText = sizeText;
       statVolume.innerText = volumeText;
       statWeight.innerText = `~${rawMetricsCache.weightGrams.toFixed(1)}g`;
       statCost.innerText = `$${Math.max(0.05, rawMetricsCache.costUSD).toFixed(2)}`;
     }
-    
+
     async function pollStatus(taskId) {
       const statusText = document.getElementById("statusText");
       const spinner = document.getElementById("spinner");
@@ -579,7 +587,7 @@
       const genBtn = document.getElementById("generateBtn");
       const promptInput = document.getElementById("prompt");
       const imageInput = document.getElementById("imageInput");
-    
+
       const interval = setInterval(async () => {
         try {
           const res = await fetch(`${BACKEND_BASE_URL}/status/${taskId}`);
@@ -592,13 +600,13 @@
             statusText.innerText = "Syncing pipeline stream...";
             return;
           }
-    
+
           const currentProgress = task.progress !== undefined ? task.progress : (result.progress || 0);
-    
+
           if (currentStatus === "success" || currentStatus === "COMPLETED") {
             clearInterval(interval);
             statusText.innerText = "Shape calculated! Processing object rendering view...";
-    
+
             const taskOutput = task.output || result.output;
             
             let rawModelUrl = "";
@@ -610,7 +618,7 @@
             }
             
             if (!rawModelUrl) throw new Error("Finished asset cloud location data was empty.");
-    
+
             currentRawModelUrl = rawModelUrl;
             
             const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
@@ -618,22 +626,22 @@
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ url: rawModelUrl })
             });
-    
+
             globalGlbBuffer = await fileResponse.arrayBuffer();
             currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
             viewer.src = currentBlobUrl;
-    
+
             document.getElementById("scaleSlider").value = "1.0";
             document.getElementById("scaleDisplay").innerText = "1.0x";
             viewer.style.transform = "none";
-    
+
             const statsLoader = new THREE.GLTFLoader();
             statsLoader.parse(globalGlbBuffer, "", function(gltf) {
               calculatePrintStats(gltf.scene);
             }, function(err) {
               console.warn("Could not index 3D component metrics:", err);
             });
-    
+
             statusText.innerText = "Completed! Choose an action below to store or ship your custom item.";
             spinner.classList.add("hidden");
             viewerArea.classList.remove("hidden");
@@ -663,7 +671,7 @@
         }
       }, 4000);
     }
-    
+
     async function persistDesign(targetStatus) {
       const shipMessage = document.getElementById("shipMessage");
       const shipBtn = document.getElementById("shipBtn");
@@ -677,11 +685,11 @@
         shipMessage.innerText = "Please build your model configuration first.";
         return;
       }
-    
+
       shipBtn.disabled = true;
       saveBtn.disabled = true;
       shipMessage.innerText = "Saving data into your secure vault container...";
-    
+
       try {
         const cloudTransferResponse = await fetch(`${BACKEND_BASE_URL}/save-to-storage`, {
           method: "POST",
@@ -692,16 +700,16 @@
             taskId: currentTaskId
           })
         });
-    
+
         const transferData = await cloudTransferResponse.json();
         if (!cloudTransferResponse.ok || !transferData.success) {
           throw new Error(transferData.error || "Could not pass object data assets into storage bucket.");
         }
-    
+
         const dimsString = rawMetricsCache 
           ? `${rawMetricsCache.mmX.toFixed(1)} x ${rawMetricsCache.mmY.toFixed(1)} x ${rawMetricsCache.mmZ.toFixed(1)} mm`
           : "1.0x baseline";
-    
+
         const { error: insertError } = await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
           prompt: lastPrompt || "Custom Building Piece",
@@ -713,9 +721,9 @@
           marketplace_title: lastPrompt || "Custom Building Piece",
           marketplace_description: "A unique design generated in the TangiblX workshop."
         });
-    
+
         if (insertError) throw insertError;
-    
+
         shipMessage.innerText = targetStatus === 'ordered' 
           ? "Item ordered successfully! Track progress inside your personal dashboard folder."
           : "Item structure has been safely logged into your saved collection!";
@@ -728,74 +736,74 @@
         if (saveBtn) saveBtn.disabled = false;
       }
     }
-    
+
     async function updateOrderStatusDirectly(orderId, nextStatus) {
       const { error } = await supabaseClient
         .from("lego_orders")
         .update({ status: nextStatus })
         .eq("id", orderId)
         .eq("user_id", activeUser.id);
-    
+
       if (error) {
         alert("Could not complete order layout changes: " + error.message);
         return;
       }
       loadOrders();
     }
-    
+
     async function editLocalGalleryTitle(orderId) {
       const currentOrder = orderCache[orderId];
       if (!currentOrder) return;
       
       const newTitle = prompt("Change item display name:", currentOrder.prompt);
       if (newTitle === null || newTitle.trim() === "") return;
-    
+
       const { error } = await supabaseClient
         .from("lego_orders")
         .update({ prompt: newTitle.trim() })
         .eq("id", orderId)
         .eq("user_id", activeUser.id);
-    
+
       if (error) {
         alert("Failed to update item display name: " + error.message);
         return;
       }
       loadOrders();
     }
-    
+
     async function editMarketplaceListingTitle(orderId) {
       const { data, error: fetchError } = await supabaseClient
         .from("lego_orders")
         .select("marketplace_title, user_id")
         .eq("id", orderId)
         .single();
-    
+
       if (fetchError || !data) {
         alert("Could not load shared catalog details.");
         return;
       }
-    
+
       if (data.user_id !== activeUser?.id) {
         alert("You can only modify public names on items you created.");
         return;
       }
-    
+
       const newMarketName = prompt("Change this item's public name in the gallery showcase:", data.marketplace_title);
       if (newMarketName === null || newMarketName.trim() === "") return;
-    
+
       const { error } = await supabaseClient
         .from("lego_orders")
         .update({ marketplace_title: newMarketName.trim() })
         .eq("id", orderId)
         .eq("user_id", activeUser.id);
-    
+
       if (error) {
         alert("Failed to alter public gallery label: " + error.message);
         return;
       }
       loadMarketplace();
     }
-    
+
     async function loadOrders() {
       const grid = document.getElementById("ordersGrid");
       if (!grid) return;
@@ -803,28 +811,28 @@
         grid.innerHTML = emptyState("Please log in to see your collection archive.");
         return;
       }
-    
+
       grid.innerHTML = emptyState("Opening your private design catalog shelf...");
       const { data, error } = await supabaseClient
         .from("lego_orders")
         .select("*")
         .eq("user_id", activeUser.id)
         .order("created_at", { ascending: false });
-    
+
       if (error) {
         grid.innerHTML = emptyState(`Failed to open collection: ${error.message}`);
         return;
       }
-    
+
       if (!data || !data.length) {
         grid.innerHTML = emptyState("Your workspace is empty! Use the 'Create' studio block to build or order your first item configuration.");
         return;
       }
-    
+
       orderCache = Object.fromEntries(data.map(order => [order.id, order]));
       grid.innerHTML = data.map(orderCard).join("");
     }
-    
+
     function orderCard(order) {
       const safePrompt = escapeHtml(order.prompt || "Untitled Configuration");
       const dateText = order.created_at ? new Date(order.created_at).toLocaleDateString() : "Recent";
@@ -835,12 +843,12 @@
       const orderBadgeColor = isOrdered ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-blue-100 text-blue-800 border-blue-200";
       const orderTooltip = isOrdered ? "Ordered" : "Saved Design";
       const orderIcon = isOrdered ? "📦" : "💾";
-    
+
       const isPub = !!order.is_published;
       const pubBadgeColor = isPub ? "bg-purple-100 text-purple-800 border-purple-200" : "bg-zinc-100 text-zinc-500 border-zinc-200";
       const pubTooltip = isPub ? "Shared" : "Private";
       const pubIcon = isPub ? "🌍" : "🔒";
-    
+
       return `
         <article class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm relative flex flex-col justify-between">
           <div>
@@ -876,15 +884,15 @@
         </article>
       `;
     }
-    
+
     async function togglePublishState(orderId) {
       const order = orderCache[orderId];
       if (!order) return;
-    
+
       const nextPubState = !order.is_published;
       let title = order.marketplace_title || order.prompt;
       let desc = order.marketplace_description || "A custom building piece idea.";
-    
+
       if (nextPubState && (!order.marketplace_title || order.marketplace_title === order.prompt)) {
         const inputTitle = prompt("Enter a shared display name for the Public Gallery Showcase:", title);
         if (inputTitle === null) return; 
@@ -893,7 +901,7 @@
         }
         desc = prompt("Enter a brief description for other community members:", desc) || desc;
       }
-    
+
       const { error } = await supabaseClient
         .from("lego_orders")
         .update({
@@ -903,45 +911,45 @@
         })
         .eq("id", orderId)
         .eq("user_id", activeUser.id);
-    
+
       if (error) {
         alert("Failed to modify public sharing parameters: " + error.message);
         return;
       }
-    
+
       await loadOrders();
       await loadMarketplace();
     }
-    
+
     async function loadMarketplace() {
       const grid = document.getElementById("marketplaceGrid");
       if (!grid) return;
       grid.innerHTML = emptyState("Refreshing gallery showcase stream...");
-    
+
       const { data, error } = await supabaseClient
         .from("lego_orders")
         .select("*")
         .eq("is_published", true)
         .order("created_at", { ascending: false });
-    
+
       if (error) {
         grid.innerHTML = emptyState(`Failed to open public showcase matrix: ${error.message}`);
         return;
       }
-    
+
       if (!data || !data.length) {
         grid.innerHTML = emptyState("No designs have been shared yet! Go to your saved designs folder to publish your project ideas.");
         return;
       }
-    
+
       grid.innerHTML = data.map(marketplaceCard).join("");
     }
-    
+
     function marketplaceCard(order) {
       const title = escapeHtml(order.marketplace_title || order.prompt || "Shared Community Piece");
       const description = escapeHtml(order.marketplace_description || "A custom-shaped component idea.");
       const isOwner = activeUser && order.user_id === activeUser.id;
-    
+
       return `
         <article class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
           ${order.model_url ? `<model-viewer src="${order.model_url}" camera-controls auto-rotate alt="${title}"></model-viewer>` : `<div class="flex h-[280px] items-center justify-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-400">Preview rendering unavailable</div>`}
@@ -959,11 +967,11 @@
         </article>
       `;
     }
-    
+
     function emptyState(message) {
       return `<div class="col-span-full rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center text-sm font-semibold text-zinc-500">${escapeHtml(message)}</div>`;
     }
-    
+
     function escapeHtml(value) {
       return String(value)
         .replaceAll("&", "&amp;")
