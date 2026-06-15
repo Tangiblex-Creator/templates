@@ -17,7 +17,6 @@
     .section { display: none; }
     .section[data-visible="true"] { display: block; }
     
-    /* Custom Tooltip Styling for State Badges */
     .has-tooltip { position: relative; display: inline-block; }
     .tooltip {
       visibility: hidden; position: absolute; bottom: 125%; left: 50%;
@@ -290,9 +289,9 @@
       viewerArea.classList.add("hidden");
 
       const payload = base64ImageData ? {
-        type: "image_to_model", model_version: "v3.0", prompt: promptVal, file: { type: "png", url: base64ImageData }
+        type: "image_to_model", prompt: promptVal, file: { type: "png", url: base64ImageData }
       } : {
-        type: "text_to_model", model_version: "v3.0", prompt: promptVal
+        type: "text_to_model", prompt: promptVal
       };
 
       try {
