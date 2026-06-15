@@ -79,8 +79,8 @@
       <div class="mx-auto max-w-md px-4 py-14">
         <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
           <div class="mb-5 flex rounded-md bg-zinc-100 p-1">
-            <button id="loginTab" onclick="setAuthMode('login')" class="flex-1 rounded-md px-3 py-2 text-sm font-black">Log in</button>
-            <button id="signupTab" onclick="setAuthMode('signup')" class="flex-1 rounded-md px-3 py-2 text-sm font-black">Sign up</button>
+            <button id="loginTab" onclick="setAuthMode('login')" class="flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm">Log in</button>
+            <button id="signupTab" onclick="setAuthMode('signup')" class="flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500">Sign up</button>
           </div>
           <h2 id="authTitle" class="text-2xl font-black">Log in to TangiblX</h2>
           <div class="mt-5 space-y-4">
@@ -106,12 +106,24 @@
           <h2 class="mt-2 text-3xl font-black tracking-tight">Create a custom piece</h2>
           <div class="mt-6 space-y-5">
             <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Reference image optional</label>
-              <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="w-full rounded-md border border-dashed border-zinc-300 p-3 text-sm">
-              <div id="imagePreviewContainer" class="mt-3 hidden">
-                <img id="imgPreview" class="h-28 w-28 rounded-md border border-zinc-200 bg-zinc-100 object-contain p-1" alt="Preview">
+              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Reference image (optional)</label>
+              
+              <div class="relative group cursor-pointer flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 px-4 py-6 text-center transition-colors hover:border-red-500 hover:bg-zinc-100" onclick="document.getElementById('imageInput').click()">
+                <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="hidden">
+                <span class="text-3xl mb-2">📷</span>
+                <p id="uploadLabel" class="text-sm font-bold text-zinc-700">Click to upload image structure</p>
+                <p class="text-xs text-zinc-400 mt-1">Supports PNG, JPG, JPEG formats</p>
+              </div>
+
+              <div id="imagePreviewContainer" class="mt-4 hidden flex items-center gap-3 bg-zinc-50 p-2 rounded-lg border border-zinc-200">
+                <img id="imgPreview" class="h-16 w-16 rounded-md border border-zinc-200 bg-white object-contain p-1" alt="Preview">
+                <div class="flex-1 min-w-0">
+                  <p id="previewFileName" class="text-xs font-bold text-zinc-800 truncate">Uploaded_Image.png</p>
+                  <button onclick="clearSelectedImage(event)" class="text-[10px] font-black text-red-600 uppercase hover:underline mt-0.5">Remove Image</button>
+                </div>
               </div>
             </div>
+            
             <div>
               <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Prompt</label>
               <textarea id="prompt" rows="5" class="w-full resize-none rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Example: A red LEGO-compatible mini trophy piece..."></textarea>
@@ -189,6 +201,7 @@
     let currentTaskId = "";
     let currentRawModelUrl = "";
     let base64ImageData = null;
+    let rawFileObject = null;
     let activeUser = null;
     let authMode = "login";
     let lastPrompt = "";
@@ -264,19 +277,32 @@
     function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
+      rawFileObject = file;
+      
       const reader = new FileReader();
       reader.onload = function(e) {
         base64ImageData = e.target.result;
         document.getElementById("imgPreview").src = base64ImageData;
+        document.getElementById("previewFileName").innerText = file.name;
         document.getElementById("imagePreviewContainer").classList.remove("hidden");
+        document.getElementById("uploadLabel").innerText = "Image Selected";
       };
       reader.readAsDataURL(file);
+    }
+
+    function clearSelectedImage(event) {
+      if (event) event.stopPropagation();
+      rawFileObject = null;
+      base64ImageData = null;
+      document.getElementById("imageInput").value = "";
+      document.getElementById("imagePreviewContainer").classList.add("hidden");
+      document.getElementById("uploadLabel").innerText = "Click to upload image structure";
     }
 
     async function generate3DModel() {
       const promptInput = document.getElementById("prompt");
       const promptVal = promptInput.value.trim();
-      if (!promptVal && !base64ImageData) { alert("Enter image or prompt instructions."); return; }
+      if (!promptVal && !rawFileObject) { alert("Enter image or prompt instructions."); return; }
 
       const genBtn = document.getElementById("generateBtn");
       const statusText = document.getElementById("statusText");
@@ -288,8 +314,34 @@
       spinner.classList.remove("hidden");
       viewerArea.classList.add("hidden");
 
-      const payload = base64ImageData ? {
-        type: "image_to_model", prompt: promptVal, file: { type: "png", url: base64ImageData }
+      let remoteFileUrl = null;
+
+      // RESOLVES ENGINE INITIALIZATION FAILED ERROR: Sync file stream to remote public URL before backend execution 
+      if (rawFileObject) {
+        statusText.innerText = "Staging asset image link pointers...";
+        try {
+          const form = new FormData();
+          form.append("file", rawFileObject);
+          const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", {
+            method: "POST",
+            body: form
+          });
+          const uploadData = await uploadRes.json();
+          if (!uploadData.data?.url) throw new Error("File hosting sync rejected parameters.");
+          
+          // Convert view URL to direct download stream string
+          remoteFileUrl = uploadData.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+        } catch (cdnErr) {
+          statusText.innerText = `Storage Staging Error: ${cdnErr.message}`;
+          spinner.classList.add("hidden");
+          genBtn.disabled = false;
+          return;
+        }
+      }
+
+      statusText.innerText = "Spawning generative 3D meshes...";
+      const payload = remoteFileUrl ? {
+        type: "image_to_model", prompt: promptVal, file: { type: "png", url: remoteFileUrl }
       } : {
         type: "text_to_model", prompt: promptVal
       };
@@ -302,11 +354,11 @@
         });
         const data = await response.json();
         const taskId = data.task_id || (data.data && data.data.task_id);
-        if (!taskId) throw new Error("Initialization failed.");
+        if (!taskId) throw new Error(data.error || "Initialization failed.");
 
         currentTaskId = taskId;
         lastPrompt = promptVal;
-        lastInputType = base64ImageData ? "image" : "text";
+        lastInputType = remoteFileUrl ? "image" : "text";
         pollTaskProgress(taskId);
       } catch (err) {
         statusText.innerText = `Error: ${err.message}`;
@@ -381,6 +433,8 @@
         });
         if (error) throw error;
         shipMsg.innerText = "Draft compiled successfully in your account portfolio!";
+        clearSelectedImage(null);
+        document.getElementById("prompt").value = "";
       } catch (err) { shipMsg.innerText = `Error: ${err.message}`; }
     }
 
