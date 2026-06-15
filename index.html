@@ -201,7 +201,6 @@
     let currentTaskId = "";
     let currentRawModelUrl = "";
     let base64ImageData = null;
-    let rawFileObject = null;
     let activeUser = null;
     let authMode = "login";
     let lastPrompt = "";
@@ -277,11 +276,10 @@
     function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
-      rawFileObject = file;
       
       const reader = new FileReader();
       reader.onload = function(e) {
-        base64ImageData = e.target.result;
+        base64ImageData = e.target.result; // Holds raw base64 data url cleanly
         document.getElementById("imgPreview").src = base64ImageData;
         document.getElementById("previewFileName").innerText = file.name;
         document.getElementById("imagePreviewContainer").classList.remove("hidden");
@@ -292,7 +290,6 @@
 
     function clearSelectedImage(event) {
       if (event) event.stopPropagation();
-      rawFileObject = null;
       base64ImageData = null;
       document.getElementById("imageInput").value = "";
       document.getElementById("imagePreviewContainer").classList.add("hidden");
@@ -302,7 +299,7 @@
     async function generate3DModel() {
       const promptInput = document.getElementById("prompt");
       const promptVal = promptInput.value.trim();
-      if (!promptVal && !rawFileObject) { alert("Enter image or prompt instructions."); return; }
+      if (!promptVal && !base64ImageData) { alert("Enter image or prompt instructions."); return; }
 
       const genBtn = document.getElementById("generateBtn");
       const statusText = document.getElementById("statusText");
@@ -314,34 +311,9 @@
       spinner.classList.remove("hidden");
       viewerArea.classList.add("hidden");
 
-      let remoteFileUrl = null;
-
-      // RESOLVES ENGINE INITIALIZATION FAILED ERROR: Sync file stream to remote public URL before backend execution 
-      if (rawFileObject) {
-        statusText.innerText = "Staging asset image link pointers...";
-        try {
-          const form = new FormData();
-          form.append("file", rawFileObject);
-          const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", {
-            method: "POST",
-            body: form
-          });
-          const uploadData = await uploadRes.json();
-          if (!uploadData.data?.url) throw new Error("File hosting sync rejected parameters.");
-          
-          // Convert view URL to direct download stream string
-          remoteFileUrl = uploadData.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
-        } catch (cdnErr) {
-          statusText.innerText = `Storage Staging Error: ${cdnErr.message}`;
-          spinner.classList.add("hidden");
-          genBtn.disabled = false;
-          return;
-        }
-      }
-
-      statusText.innerText = "Spawning generative 3D meshes...";
-      const payload = remoteFileUrl ? {
-        type: "image_to_model", prompt: promptVal, file: { type: "png", url: remoteFileUrl }
+      // Send cleanly down to our backend server block
+      const payload = base64ImageData ? {
+        type: "image_to_model", prompt: promptVal, imageBase64: base64ImageData
       } : {
         type: "text_to_model", prompt: promptVal
       };
@@ -353,12 +325,14 @@
           body: JSON.stringify(payload)
         });
         const data = await response.json();
-        const taskId = data.task_id || (data.data && data.data.task_id);
-        if (!taskId) throw new Error(data.error || "Initialization failed.");
+        if (!response.ok) throw new Error(data.error || "Initialization failed.");
+        
+        const taskId = data.task_id;
+        if (!taskId) throw new Error("Initialization failed to produce task token ID tracking reference.");
 
         currentTaskId = taskId;
         lastPrompt = promptVal;
-        lastInputType = remoteFileUrl ? "image" : "text";
+        lastInputType = base64ImageData ? "image" : "text";
         pollTaskProgress(taskId);
       } catch (err) {
         statusText.innerText = `Error: ${err.message}`;
