@@ -25,6 +25,11 @@
       white-space: nowrap; z-index: 50; opacity: 0; transition: opacity 0.2s;
     }
     .has-tooltip:hover .tooltip { visibility: visible; opacity: 1; }
+    
+    /* Smooth scrollbar for chat box */
+    .chat-box::-webkit-scrollbar { width: 6px; }
+    .chat-box::-webkit-scrollbar-track { background: transparent; }
+    .chat-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen bg-zinc-50 text-zinc-950">
@@ -54,9 +59,9 @@
       <div class="border-b border-zinc-200 bg-white">
         <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
-            <p class="mb-4 inline-flex rounded-md bg-yellow-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-950">Demo for custom brick ideas</p>
-            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-zinc-950 md:text-6xl">Turn a sketch or prompt into a custom LEGO-style piece.</h1>
-            <p class="mt-5 max-w-2xl text-lg leading-8 text-zinc-600">TangiblX is a demo workspace for designing playful custom LEGO-inspired pieces with AI. Sign in, describe an idea, upload a reference image if you have one, preview the generated 3D model, and save the design as a demo order.</p>
+            <p class="mb-4 inline-flex rounded-md bg-yellow-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-950">AI Design Assistant Active</p>
+            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-zinc-950 md:text-6xl">Chat with an AI architect to sculpt custom brick builds.</h1>
+            <p class="mt-5 max-w-2xl text-lg leading-8 text-zinc-600">TangiblX now features an interactive design assistant. Upload an image, explain your changes, chat through details, and let our pipeline compile absolute precision 3D models automatically.</p>
             <div class="mt-8 flex flex-wrap gap-3">
               <button onclick="showSection('auth', 'signup')" class="rounded-md bg-red-600 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500">Create account</button>
               <button onclick="showSection('auth', 'login')" class="rounded-md border border-zinc-300 px-5 py-3 text-sm font-black text-zinc-900 hover:bg-zinc-100">Log in</button>
@@ -100,59 +105,75 @@
     </section>
 
     <section id="workshop" class="section">
-      <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[0.9fr_1.1fr]">
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <p class="text-xs font-black uppercase tracking-wider text-red-600">Workshop</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Create a custom piece</h2>
-          <div class="mt-6 space-y-5">
+      <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[1.1fr_0.9fr]">
+        
+        <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm flex flex-col h-[620px]">
+          <div class="border-b border-zinc-100 pb-3 flex justify-between items-center">
             <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Reference image (optional)</label>
-              
-              <div class="relative group cursor-pointer flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 px-4 py-6 text-center transition-colors hover:border-red-500 hover:bg-zinc-100" onclick="document.getElementById('imageInput').click()">
-                <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="hidden">
-                <span class="text-3xl mb-2">📷</span>
-                <p id="uploadLabel" class="text-sm font-bold text-zinc-700">Click to upload image structure</p>
-                <p class="text-xs text-zinc-400 mt-1">Supports PNG, JPG, JPEG formats</p>
-              </div>
+              <p class="text-xs font-black uppercase tracking-wider text-red-600">Studio Assistant</p>
+              <h2 class="text-xl font-black tracking-tight">Refine Your Brick Idea</h2>
+            </div>
+            <button onclick="resetChat()" class="text-[11px] font-black uppercase tracking-wider border border-zinc-200 px-2 py-1 rounded text-zinc-500 hover:bg-zinc-50">Reset Chat</button>
+          </div>
 
-              <div id="imagePreviewContainer" class="mt-4 hidden flex items-center gap-3 bg-zinc-50 p-2 rounded-lg border border-zinc-200">
-                <img id="imgPreview" class="h-16 w-16 rounded-md border border-zinc-200 bg-white object-contain p-1" alt="Preview">
-                <div class="flex-1 min-w-0">
-                  <p id="previewFileName" class="text-xs font-bold text-zinc-800 truncate">Uploaded_Image.png</p>
-                  <button onclick="clearSelectedImage(event)" class="text-[10px] font-black text-red-600 uppercase hover:underline mt-0.5">Remove Image</button>
-                </div>
+          <div id="chatBox" class="chat-box flex-1 overflow-y-auto my-4 space-y-3 pr-1 text-sm">
+            <div class="bg-zinc-100 text-zinc-800 p-3 rounded-lg max-w-[85%] font-medium">
+              Hey! 👋 I'm your brick design assistant. Upload an image template or describe what you want to construct, and tell me any specific differences or tweaks you'd like to see. I'll make sure it looks perfect before sending it to the 3D renderer!
+            </div>
+          </div>
+
+          <div id="imagePreviewContainer" class="hidden mb-3 flex items-center gap-3 bg-zinc-50 p-2 rounded-lg border border-zinc-200">
+            <img id="imgPreview" class="h-12 w-12 rounded-md border border-zinc-200 bg-white object-contain p-1" alt="Preview">
+            <div class="flex-1 min-w-0">
+              <p id="previewFileName" class="text-xs font-bold text-zinc-800 truncate">Uploaded_Image.png</p>
+              <button onclick="clearSelectedImage(event)" class="text-[10px] font-black text-red-600 uppercase hover:underline">Remove Image</button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex gap-2">
+              <button onclick="document.getElementById('imageInput').click()" class="rounded-md border border-zinc-300 bg-zinc-50 p-3 text-xl hover:bg-zinc-100" title="Upload Reference Image">
+                📷
+                <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="hidden">
+              </button>
+              
+              <input type="text" id="chatInput" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Say what you want to change, add, or fix...">
+              
+              <button id="sendChatBtn" onclick="sendChatMessage()" class="rounded-md bg-red-600 px-4 text-sm font-black text-white hover:bg-red-500">Send</button>
+            </div>
+            
+            <button id="generateBtn" onclick="trigger3DRenderPipeline()" class="w-full rounded-md bg-zinc-950 py-3 text-xs font-black uppercase tracking-wider text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50">
+              ✨ Finalize Design & Render 3D Model
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm flex flex-col justify-between h-[620px]">
+          <div>
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Preview Engine</p>
+                <h2 class="mt-1 text-2xl font-black">Generated Output</h2>
               </div>
             </div>
             
-            <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Prompt</label>
-              <textarea id="prompt" rows="5" class="w-full resize-none rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Example: A red LEGO-compatible mini trophy piece..."></textarea>
+            <div id="statusBox" class="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-10 text-center">
+              <div id="spinner" class="mx-auto mb-3 hidden h-7 w-7 animate-spin rounded-full border-[3px] border-red-600 border-t-transparent"></div>
+              <p id="statusText" class="text-sm font-semibold text-zinc-600">The 3D preview model will build here once your design conversation is finalized.</p>
             </div>
-            <button id="generateBtn" onclick="generate3DModel()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500">Generate 3D model</button>
+
+            <div id="viewerArea" class="mt-5 hidden space-y-4 flex-1">
+              <model-viewer id="3dPreview" camera-controls auto-rotate></model-viewer>
+            </div>
+          </div>
+
+          <div id="actionControls" class="hidden grid gap-3 sm:grid-cols-2 pt-4 border-t border-zinc-100">
+            <button id="downloadBtn" onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
+            <button id="shipBtn" onclick="saveInitialDraft()" class="rounded-md bg-zinc-900 px-4 py-3 text-sm font-black text-white hover:bg-zinc-800">Save to Orders Portfolio</button>
+            <p id="shipMessage" class="col-span-2 min-h-6 text-xs font-semibold text-zinc-500 mt-1"></p>
           </div>
         </div>
 
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Preview</p>
-              <h2 class="mt-2 text-2xl font-black">Generated model</h2>
-            </div>
-            <span id="taskBadge" class="hidden rounded-md bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600"></span>
-          </div>
-          <div id="statusBox" class="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-5 text-center">
-            <div id="spinner" class="mx-auto mb-3 hidden h-7 w-7 animate-spin rounded-full border-[3px] border-red-600 border-t-transparent"></div>
-            <p id="statusText" class="text-sm font-semibold text-zinc-600">Your model preview will appear here after generation.</p>
-          </div>
-          <div id="viewerArea" class="mt-5 hidden space-y-4">
-            <model-viewer id="3dPreview" camera-controls auto-rotate></model-viewer>
-            <div class="grid gap-3 sm:grid-cols-2">
-              <button id="downloadBtn" onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
-              <button id="shipBtn" onclick="saveInitialDraft()" class="rounded-md bg-zinc-900 px-4 py-3 text-sm font-black text-white hover:bg-zinc-800">Save to Orders Portfolio</button>
-            </div>
-            <p id="shipMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -203,8 +224,10 @@
     let base64ImageData = null;
     let activeUser = null;
     let authMode = "login";
-    let lastPrompt = "";
-    let lastInputType = "";
+    
+    // Memory structures for chat logic strings
+    let chatHistory = [];
+    let compilationPromptCache = "";
 
     document.addEventListener("DOMContentLoaded", initializeApp);
 
@@ -253,8 +276,6 @@
       const isLogin = mode === "login";
       document.getElementById("authTitle").innerText = isLogin ? "Log in to TangiblX" : "Create your TangiblX account";
       document.getElementById("authSubmitBtn").innerText = isLogin ? "Log in" : "Sign up";
-      document.getElementById("loginTab").className = isLogin ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
-      document.getElementById("signupTab").className = !isLogin ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
     }
 
     async function submitAuth() {
@@ -279,11 +300,13 @@
       
       const reader = new FileReader();
       reader.onload = function(e) {
-        base64ImageData = e.target.result; // Holds raw base64 data url cleanly
+        base64ImageData = e.target.result;
         document.getElementById("imgPreview").src = base64ImageData;
         document.getElementById("previewFileName").innerText = file.name;
         document.getElementById("imagePreviewContainer").classList.remove("hidden");
-        document.getElementById("uploadLabel").innerText = "Image Selected";
+        
+        appendMessage("user", `[Attached Reference Image: ${file.name}]`);
+        sendChatMessage("The user has uploaded a new image as reference. Acknowledge the image asset layout gracefully.");
       };
       reader.readAsDataURL(file);
     }
@@ -293,47 +316,106 @@
       base64ImageData = null;
       document.getElementById("imageInput").value = "";
       document.getElementById("imagePreviewContainer").classList.add("hidden");
-      document.getElementById("uploadLabel").innerText = "Click to upload image structure";
     }
 
-    async function generate3DModel() {
-      const promptInput = document.getElementById("prompt");
-      const promptVal = promptInput.value.trim();
-      if (!promptVal && !base64ImageData) { alert("Enter image or prompt instructions."); return; }
+    function appendMessage(sender, text) {
+      const chatBox = document.getElementById("chatBox");
+      const msgBubble = document.createElement("div");
+      
+      if (sender === "user") {
+        msgBubble.className = "bg-red-600 text-white p-3 rounded-lg max-w-[85%] ml-auto font-semibold";
+      } else {
+        msgBubble.className = "bg-zinc-100 text-zinc-800 p-3 rounded-lg max-w-[85%] font-medium";
+      }
+      
+      msgBubble.innerText = text;
+      chatBox.appendChild(msgBubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendChatMessage(systemOverrideMsg) {
+      const chatInput = document.getElementById("chatInput");
+      const sendBtn = document.getElementById("sendChatBtn");
+      
+      let userText = systemOverrideMsg || chatInput.value.trim();
+      if (!userText) return;
+
+      if (!systemOverrideMsg) {
+        appendMessage("user", userText);
+        chatInput.value = "";
+      }
+
+      sendBtn.disabled = true;
+      
+      try {
+        const response = await fetch(`${BACKEND_BASE_URL}/chat-assistant`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: userText,
+            history: chatHistory,
+            imageBase64: base64ImageData
+          })
+        });
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        chatHistory = data.history;
+        compilationPromptCache = data.compiledPrompt;
+        
+        appendMessage("assistant", data.reply);
+      } catch (err) {
+        appendMessage("assistant", `Error: Couldn't connect to design assistant workspace node. ${err.message}`);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    function resetChat() {
+      chatHistory = [];
+      compilationPromptCache = "";
+      clearSelectedImage();
+      document.getElementById("chatBox").innerHTML = `
+        <div class="bg-zinc-100 text-zinc-800 p-3 rounded-lg max-w-[85%] font-medium">
+          Workspace state scrubbed clean! Tell me what custom LEGO brick style piece you want to design.
+        </div>`;
+    }
+
+    async function trigger3DRenderPipeline() {
+      if (!compilationPromptCache) {
+        alert("Please describe your idea to the Assistant first to establish structural details!");
+        return;
+      }
 
       const genBtn = document.getElementById("generateBtn");
       const statusText = document.getElementById("statusText");
       const spinner = document.getElementById("spinner");
       const viewerArea = document.getElementById("viewerArea");
+      const statusBox = document.getElementById("statusBox");
+      const actionControls = document.getElementById("actionControls");
 
       genBtn.disabled = true;
-      statusText.innerText = "Connecting to pipeline...";
+      statusBox.classList.remove("hidden");
+      statusText.innerText = "Compiling details and querying Tripo generative engine core nodes...";
       spinner.classList.remove("hidden");
       viewerArea.classList.add("hidden");
-
-      // Send cleanly down to our backend server block
-      const payload = base64ImageData ? {
-        type: "image_to_model", prompt: promptVal, imageBase64: base64ImageData
-      } : {
-        type: "text_to_model", prompt: promptVal
-      };
+      actionControls.classList.add("hidden");
 
       try {
         const response = await fetch(`${BACKEND_BASE_URL}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            type: "text_to_model",
+            prompt: compilationPromptCache
+          })
         });
+        
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Initialization failed.");
         
-        const taskId = data.task_id;
-        if (!taskId) throw new Error("Initialization failed to produce task token ID tracking reference.");
-
-        currentTaskId = taskId;
-        lastPrompt = promptVal;
-        lastInputType = base64ImageData ? "image" : "text";
-        pollTaskProgress(taskId);
+        pollTaskProgress(data.task_id);
       } catch (err) {
         statusText.innerText = `Error: ${err.message}`;
         spinner.classList.add("hidden");
@@ -347,6 +429,8 @@
       const viewerArea = document.getElementById("viewerArea");
       const viewer = document.getElementById("3dPreview");
       const genBtn = document.getElementById("generateBtn");
+      const statusBox = document.getElementById("statusBox");
+      const actionControls = document.getElementById("actionControls");
 
       const interval = setInterval(async () => {
         try {
@@ -367,17 +451,17 @@
             currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
             viewer.src = currentBlobUrl;
 
-            statusText.innerText = "Generation completed successfully!";
-            spinner.classList.add("hidden");
+            statusBox.classList.add("hidden");
             viewerArea.classList.remove("hidden");
+            actionControls.classList.remove("hidden");
             genBtn.disabled = false;
           } else if (task.status === "failed") {
             clearInterval(interval);
-            statusText.innerText = "Generation engine failed.";
+            statusText.innerText = "Tripo execution cluster nodes failed rendering structures.";
             spinner.classList.add("hidden");
             genBtn.disabled = false;
           } else {
-            statusText.innerText = `Processing structures... (${task.progress || 0}%)`;
+            statusText.innerText = `Sculpting mesh architecture... (${task.progress || 0}%)`;
           }
         } catch (e) {
           clearInterval(interval);
@@ -399,16 +483,15 @@
 
         const { error } = await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
-          prompt: lastPrompt || "Custom Piece",
-          input_type: lastInputType,
+          prompt: compilationPromptCache.substring(0, 50) + "...",
+          input_type: "text",
           model_url: syncResult.modelUrl,
           status: "unordered",
           is_published: false
         });
         if (error) throw error;
         shipMsg.innerText = "Draft compiled successfully in your account portfolio!";
-        clearSelectedImage(null);
-        document.getElementById("prompt").value = "";
+        resetChat();
       } catch (err) { shipMsg.innerText = `Error: ${err.message}`; }
     }
 
