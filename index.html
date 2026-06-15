@@ -16,6 +16,16 @@
     .nav-btn[data-active="true"] { background: #111827; color: #ffffff; border-color: #334155; }
     .section { display: none; }
     .section[data-visible="true"] { display: block; }
+    
+    /* Custom Tooltip Styling for State Badges */
+    .has-tooltip { position: relative; display: inline-block; }
+    .tooltip {
+      visibility: hidden; position: absolute; bottom: 125%; left: 50%;
+      transform: translateX(-50%); background-color: #1f2937; color: #fff;
+      text-align: center; padding: 4px 8px; border-radius: 4px; font-size: 11px;
+      white-space: nowrap; z-index: 50; opacity: 0; transition: opacity 0.2s;
+    }
+    .has-tooltip:hover .tooltip { visibility: visible; opacity: 1; }
   </style>
 </head>
 <body class="min-h-screen bg-zinc-50 text-zinc-950">
@@ -53,7 +63,6 @@
               <button onclick="showSection('auth', 'login')" class="rounded-md border border-zinc-300 px-5 py-3 text-sm font-black text-zinc-900 hover:bg-zinc-100">Log in</button>
             </div>
           </div>
-
           <div class="rounded-lg border border-zinc-200 bg-zinc-100 p-5 shadow-sm">
             <div class="grid grid-cols-5 gap-2">
               <div class="h-16 rounded-md bg-red-500 shadow-inner"></div>
@@ -61,40 +70,9 @@
               <div class="h-16 rounded-md bg-blue-500 shadow-inner"></div>
               <div class="h-16 rounded-md bg-emerald-500 shadow-inner"></div>
               <div class="h-16 rounded-md bg-zinc-900 shadow-inner"></div>
-              <div class="col-span-2 h-28 rounded-md bg-white p-3 shadow-inner">
-                <div class="mb-3 h-5 w-5 rounded-full bg-red-500"></div>
-                <div class="h-3 w-20 rounded bg-zinc-300"></div>
-              </div>
-              <div class="col-span-3 h-28 rounded-md bg-yellow-300 p-3 shadow-inner">
-                <div class="flex gap-3">
-                  <span class="h-7 w-7 rounded-full bg-yellow-100"></span>
-                  <span class="h-7 w-7 rounded-full bg-yellow-100"></span>
-                  <span class="h-7 w-7 rounded-full bg-yellow-100"></span>
-                </div>
-                <div class="mt-5 h-4 w-40 rounded bg-yellow-500/60"></div>
-              </div>
-              <div class="col-span-5 h-24 rounded-md bg-blue-600 p-4 text-white shadow-inner">
-                <div class="h-4 w-48 rounded bg-blue-200/80"></div>
-                <div class="mt-3 h-3 w-64 max-w-full rounded bg-blue-300/70"></div>
-              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-3">
-        <article class="rounded-lg border border-zinc-200 bg-white p-5">
-          <h2 class="text-base font-black">Prompt or image</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Start from a written idea, a reference image, or both.</p>
-        </article>
-        <article class="rounded-lg border border-zinc-200 bg-white p-5">
-          <h2 class="text-base font-black">Preview in 3D</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Inspect the generated model directly in the browser.</p>
-        </article>
-        <article class="rounded-lg border border-zinc-200 bg-white p-5">
-          <h2 class="text-base font-black">Save and share</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Save demo orders to your account and publish favorites to the marketplace.</p>
-        </article>
       </div>
     </section>
 
@@ -106,15 +84,14 @@
             <button id="signupTab" onclick="setAuthMode('signup')" class="flex-1 rounded-md px-3 py-2 text-sm font-black">Sign up</button>
           </div>
           <h2 id="authTitle" class="text-2xl font-black">Log in to TangiblX</h2>
-          <p class="mt-2 text-sm leading-6 text-zinc-600">Accounts are powered by Supabase so demo orders can be saved to your profile.</p>
           <div class="mt-5 space-y-4">
             <div>
               <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Email</label>
-              <input id="authEmail" type="email" autocomplete="email" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="you@example.com">
+              <input id="authEmail" type="email" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="you@example.com">
             </div>
             <div>
               <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Password</label>
-              <input id="authPassword" type="password" autocomplete="current-password" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="At least 6 characters">
+              <input id="authPassword" type="password" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="At least 6 characters">
             </div>
             <button id="authSubmitBtn" onclick="submitAuth()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-500">Log in</button>
             <p id="authMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
@@ -128,23 +105,19 @@
         <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
           <p class="text-xs font-black uppercase tracking-wider text-red-600">Workshop</p>
           <h2 class="mt-2 text-3xl font-black tracking-tight">Create a custom piece</h2>
-          <p class="mt-3 text-sm leading-6 text-zinc-600">Describe a LEGO-style part, upload a reference image, or use both. TangiblX will send the request through the current Tripo generation pipeline.</p>
-
           <div class="mt-6 space-y-5">
             <div>
               <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Reference image optional</label>
-              <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="w-full rounded-md border border-dashed border-zinc-300 p-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
+              <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="w-full rounded-md border border-dashed border-zinc-300 p-3 text-sm">
               <div id="imagePreviewContainer" class="mt-3 hidden">
-                <img id="imgPreview" class="h-28 w-28 rounded-md border border-zinc-200 bg-zinc-100 object-contain p-1" alt="Uploaded reference preview">
+                <img id="imgPreview" class="h-28 w-28 rounded-md border border-zinc-200 bg-zinc-100 object-contain p-1" alt="Preview">
               </div>
             </div>
-
             <div>
               <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Prompt</label>
-              <textarea id="prompt" rows="5" class="w-full resize-none rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Example: A red LEGO-compatible mini trophy piece with round studs and smooth curved handles"></textarea>
+              <textarea id="prompt" rows="5" class="w-full resize-none rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Example: A red LEGO-compatible mini trophy piece..."></textarea>
             </div>
-
-            <button id="generateBtn" onclick="generate3DModel()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-zinc-400">Generate 3D model</button>
+            <button id="generateBtn" onclick="generate3DModel()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500">Generate 3D model</button>
           </div>
         </div>
 
@@ -156,17 +129,15 @@
             </div>
             <span id="taskBadge" class="hidden rounded-md bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600"></span>
           </div>
-
           <div id="statusBox" class="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-5 text-center">
             <div id="spinner" class="mx-auto mb-3 hidden h-7 w-7 animate-spin rounded-full border-[3px] border-red-600 border-t-transparent"></div>
             <p id="statusText" class="text-sm font-semibold text-zinc-600">Your model preview will appear here after generation.</p>
           </div>
-
           <div id="viewerArea" class="mt-5 hidden space-y-4">
-            <model-viewer id="3dPreview" camera-controls auto-rotate alt="TangiblX generated LEGO-style model"></model-viewer>
+            <model-viewer id="3dPreview" camera-controls auto-rotate></model-viewer>
             <div class="grid gap-3 sm:grid-cols-2">
               <button id="downloadBtn" onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
-              <button id="shipBtn" onclick="shipCurrentDesign()" class="rounded-md bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-500">Send for shipping</button>
+              <button id="shipBtn" onclick="saveInitialDraft()" class="rounded-md bg-zinc-900 px-4 py-3 text-sm font-black text-white hover:bg-zinc-800">Save to Orders Portfolio</button>
             </div>
             <p id="shipMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
           </div>
@@ -178,23 +149,28 @@
       <div class="mx-auto max-w-6xl px-4 py-8">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p class="text-xs font-black uppercase tracking-wider text-red-600">Orders</p>
+            <p class="text-xs font-black uppercase tracking-wider text-red-600">Dashboard</p>
             <h2 class="mt-2 text-3xl font-black tracking-tight">Your saved designs</h2>
           </div>
           <button onclick="loadOrders()" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black hover:bg-zinc-100">Refresh</button>
         </div>
-        <div id="ordersGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+        <div id="ordersGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3"></div>
       </div>
     </section>
 
     <section id="marketplace" class="section">
-      <div class="mx-auto max-w-6xl px-4 py-8">
-        <div class="mb-6">
-          <p class="text-xs font-black uppercase tracking-wider text-red-600">Marketplace</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Community brick ideas</h2>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">Dummy designs show empty preview spaces for now. Published TangiblX orders show their saved model preview.</p>
+      <div class="mx-auto max-w-6xl px-4 py-8 space-y-10">
+        <div>
+          <p class="text-xs font-black uppercase tracking-wider text-red-600">My Creations</p>
+          <h2 class="mt-2 text-3xl font-black tracking-tight">Your Published Architecture</h2>
+          <div id="myMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-4"></div>
         </div>
-        <div id="marketplaceGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+        <hr class="border-zinc-200" />
+        <div>
+          <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Public Feed</p>
+          <h2 class="mt-2 text-3xl font-black tracking-tight">Community brick ideas</h2>
+          <div id="communityMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-4"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -203,7 +179,6 @@
     const SUPABASE_URL = "https://lfvtqvszgmqxgznupopr.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmdnRxdnN6Z21xeGd6bnVwb3ByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjQ4NDYsImV4cCI6MjA5NjUwMDg0Nn0.712348spxVxGS8dwzD7u2M5NuCMqbYEASPD4YxsPYE0";
     
-    // Automatically fall back to localhost if running on your machine local development port setup
     const BACKEND_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'
         : 'https://tangiblx-backend-2fhn.onrender.com';
@@ -219,18 +194,14 @@
     let authMode = "login";
     let lastPrompt = "";
     let lastInputType = "";
-    let orderCache = {};
 
     document.addEventListener("DOMContentLoaded", initializeApp);
 
     async function initializeApp() {
-      setAuthMode("login");
       try {
         const { data } = await supabaseClient.auth.getSession();
         activeUser = data.session?.user || null;
-      } catch (e) {
-        console.error("Supabase user session resolution failure:", e);
-      }
+      } catch (e) { console.error(e); }
 
       updateAuthUI();
       showSection(activeUser ? "workshop" : "landing");
@@ -243,14 +214,10 @@
     }
 
     function updateAuthUI() {
-      const nav = document.getElementById("appNav");
-      const loginBtn = document.getElementById("loginTopBtn");
-      const logoutBtn = document.getElementById("logoutBtn");
+      document.getElementById("appNav")?.classList.toggle("hidden", !activeUser);
+      document.getElementById("loginTopBtn")?.classList.toggle("hidden", !!activeUser);
+      document.getElementById("logoutBtn")?.classList.toggle("hidden", !activeUser);
       const emailDisplay = document.getElementById("userEmail");
-
-      if (nav) nav.classList.toggle("hidden", !activeUser);
-      if (loginBtn) loginBtn.classList.toggle("hidden", !!activeUser);
-      if (logoutBtn) logoutBtn.classList.toggle("hidden", !activeUser);
       if (emailDisplay) {
         emailDisplay.classList.toggle("hidden", !activeUser);
         emailDisplay.innerText = activeUser?.email || "";
@@ -259,12 +226,10 @@
 
     function showSection(sectionId, targetMode) {
       if (targetMode) setAuthMode(targetMode);
-
       if (["workshop", "orders", "marketplace"].includes(sectionId) && !activeUser) {
         sectionId = "auth";
         setAuthMode("login");
       }
-
       document.querySelectorAll(".section").forEach(s => s.dataset.visible = s.id === sectionId ? "true" : "false");
       document.querySelectorAll(".nav-btn").forEach(b => b.dataset.active = b.dataset.target === sectionId ? "true" : "false");
 
@@ -279,38 +244,27 @@
       document.getElementById("authSubmitBtn").innerText = isLogin ? "Log in" : "Sign up";
       document.getElementById("loginTab").className = isLogin ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
       document.getElementById("signupTab").className = !isLogin ? "flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm" : "flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500";
-      document.getElementById("authMessage").innerText = "";
     }
 
     async function submitAuth() {
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value;
       const msg = document.getElementById("authMessage");
+      if (!email || !password) { msg.innerText = "Complete entries."; return; }
 
-      if (!email || !password) {
-        msg.innerText = "Please complete all standard account entries.";
-        return;
-      }
-
-      msg.innerText = authMode === "login" ? "Authenticating entry..." : "Provisioning credentials...";
       const action = authMode === "login" 
         ? supabaseClient.auth.signInWithPassword({ email, password })
         : supabaseClient.auth.signUp({ email, password });
 
       const { error } = await action;
-      if (error) {
-        msg.innerText = error.message;
-      }
+      if (error) msg.innerText = error.message;
     }
 
-    async function logout() {
-      await supabaseClient.auth.signOut();
-    }
+    async function logout() { await supabaseClient.auth.signOut(); }
 
     function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
         base64ImageData = e.target.result;
@@ -322,40 +276,23 @@
 
     async function generate3DModel() {
       const promptInput = document.getElementById("prompt");
-      const fileInput = document.getElementById("imageInput");
       const promptVal = promptInput.value.trim();
-
-      if (!promptVal && !base64ImageData) {
-        alert("Please map down an operational image layout snapshot or text directive parameter.");
-        return;
-      }
+      if (!promptVal && !base64ImageData) { alert("Enter image or prompt instructions."); return; }
 
       const genBtn = document.getElementById("generateBtn");
       const statusText = document.getElementById("statusText");
       const spinner = document.getElementById("spinner");
       const viewerArea = document.getElementById("viewerArea");
-      const taskBadge = document.getElementById("taskBadge");
-
-      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-      globalGlbBuffer = null;
-      currentRawModelUrl = "";
-      lastPrompt = promptVal;
-      lastInputType = base64ImageData && promptVal ? "text_and_image" : (base64ImageData ? "image" : "text");
 
       genBtn.disabled = true;
-      statusText.innerText = "Connecting to pipeline handler nodes...";
+      statusText.innerText = "Connecting to pipeline...";
       spinner.classList.remove("hidden");
       viewerArea.classList.add("hidden");
-      taskBadge.classList.add("hidden");
 
-      // Payload configuration passes text modifications alongside image matrices down to backend processors safely
       const payload = base64ImageData ? {
-        type: "image_to_model",
-        prompt: promptVal, 
-        file: { type: "png", url: base64ImageData }
+        type: "image_to_model", model_version: "v3.0", prompt: promptVal, file: { type: "png", url: base64ImageData }
       } : {
-        type: "text_to_model",
-        prompt: promptVal
+        type: "text_to_model", model_version: "v3.0", prompt: promptVal
       };
 
       try {
@@ -364,19 +301,16 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-
         const data = await response.json();
         const taskId = data.task_id || (data.data && data.data.task_id);
-
-        if (!taskId) throw new Error(data.error || data.message || "Failed to start pipeline.");
+        if (!taskId) throw new Error("Initialization failed.");
 
         currentTaskId = taskId;
-        taskBadge.innerText = `Task ID: ${taskId}`;
-        taskBadge.classList.remove("hidden");
-        
+        lastPrompt = promptVal;
+        lastInputType = base64ImageData ? "image" : "text";
         pollTaskProgress(taskId);
       } catch (err) {
-        statusText.innerText = `Pipeline Connection Error: ${err.message}`;
+        statusText.innerText = `Error: ${err.message}`;
         spinner.classList.add("hidden");
         genBtn.disabled = false;
       }
@@ -394,82 +328,61 @@
           const res = await fetch(`${BACKEND_BASE_URL}/status/${taskId}`);
           const result = await res.json();
           const task = result.data || result;
-          const currentStatus = task.status;
 
-          if (currentStatus === "success") {
+          if (task.status === "success") {
             clearInterval(interval);
-            statusText.innerText = "Asset generated successfully! Compiling view mesh layers...";
-
-            const output = task.output || result.output;
-            currentRawModelUrl = output?.model || output?.glb;
+            currentRawModelUrl = task.output?.model || task.output?.glb;
 
             const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ url: currentRawModelUrl })
             });
-
             globalGlbBuffer = await fileResponse.arrayBuffer();
             currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
             viewer.src = currentBlobUrl;
 
-            statusText.innerText = "Completed! Choose an action below to store or ship your custom item.";
+            statusText.innerText = "Generation completed successfully!";
             spinner.classList.add("hidden");
             viewerArea.classList.remove("hidden");
             genBtn.disabled = false;
-          } else if (currentStatus === "failed") {
+          } else if (task.status === "failed") {
             clearInterval(interval);
-            statusText.innerText = `Generation halted by core engine: ${task.error_message || 'Unknown processing crash'}`;
+            statusText.innerText = "Generation engine failed.";
             spinner.classList.add("hidden");
             genBtn.disabled = false;
           } else {
-            statusText.innerText = `Processing geometry structures... (${task.progress || 0}%)`;
+            statusText.innerText = `Processing structures... (${task.progress || 0}%)`;
           }
         } catch (e) {
           clearInterval(interval);
-          statusText.innerText = `Tracking failure: ${e.message}`;
-          spinner.classList.add("hidden");
           genBtn.disabled = false;
         }
       }, 4000);
     }
 
-    async function shipCurrentDesign() {
+    async function saveInitialDraft() {
       const shipMsg = document.getElementById("shipMessage");
-      if (!currentRawModelUrl) return;
-
-      shipMsg.innerText = "Saving design variables securely inside project storage arrays...";
+      shipMsg.innerText = "Uploading design structures...";
       try {
         const syncRes = await fetch(`${BACKEND_BASE_URL}/save-to-storage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            rawModelUrl: currentRawModelUrl,
-            userId: activeUser.id,
-            taskId: currentTaskId
-          })
+          body: JSON.stringify({ rawModelUrl: currentRawModelUrl, userId: activeUser.id, taskId: currentTaskId })
         });
-
         const syncResult = await syncRes.json();
-        if (!syncRes.ok || !syncResult.success) throw new Error(syncResult.error || "Storage synchronization rejected.");
 
         const { error } = await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
           prompt: lastPrompt || "Custom Piece",
           input_type: lastInputType,
-          model_path: syncResult.modelPath,
           model_url: syncResult.modelUrl,
-          status: "ordered",
-          scale_dimensions: "1.4x baseline",
-          marketplace_title: lastPrompt || "Custom Piece",
-          marketplace_description: "Generated from custom workshop variables."
+          status: "unordered",
+          is_published: false
         });
-
         if (error) throw error;
-        shipMsg.innerText = "Order saved! Check the 'Orders' window block tracking status sheet profiles.";
-      } catch (err) {
-        shipMsg.innerText = `Process error encountered during checkout: ${err.message}`;
-      }
+        shipMsg.innerText = "Draft compiled successfully in your account portfolio!";
+      } catch (err) { shipMsg.innerText = `Error: ${err.message}`; }
     }
 
     function downloadCurrentModel() {
@@ -481,7 +394,7 @@
         const blob = new Blob([stlString], { type: 'text/plain' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `${currentTaskId || 'tangiblx-model'}.stl`;
+        link.download = `tangiblx-model.stl`;
         link.click();
       });
     }
@@ -489,45 +402,111 @@
     async function loadOrders() {
       const grid = document.getElementById("ordersGrid");
       if (!grid || !activeUser) return;
-
-      grid.innerHTML = "<p class='text-sm text-zinc-500 font-semibold'>Reading database nodes...</p>";
+      grid.innerHTML = "<p class='text-sm text-zinc-500 font-semibold'>Reading database profiles...</p>";
+      
       const { data, error } = await supabaseClient.from("lego_orders").select("*").eq("user_id", activeUser.id).order("created_at", { ascending: false });
+      if (error) { grid.innerHTML = "<p class='text-red-500'>Error Loading Data</p>"; return; }
 
-      if (error) {
-        grid.innerHTML = `<p class='text-sm text-red-500'>Failed to load data profile: ${error.message}</p>`;
-        return;
+      grid.innerHTML = data.length ? data.map(o => {
+        const isOrdered = o.status === "ordered";
+        const isPublished = o.is_published === true;
+
+        let actionControls = "";
+        if (!isOrdered) {
+          actionControls = `<button onclick="updateOrderStatus('${o.id}', 'ordered')" class="w-full text-center bg-red-600 text-white font-bold text-xs py-2 rounded shadow hover:bg-red-500">Order Piece</button>`;
+        } else if (isOrdered && !isPublished) {
+          actionControls = `<button onclick="publishOrderToMarketplace('${o.id}')" class="w-full text-center bg-zinc-900 text-white font-bold text-xs py-2 rounded shadow hover:bg-zinc-800">Publish to Marketplace</button>`;
+        } else if (isPublished) {
+          actionControls = `
+            <div class="space-y-2 border-t border-zinc-100 pt-2">
+              <input id="edit-title-${o.id}" type="text" placeholder="Marketplace Title" value="${escapeHtml(o.marketplace_title || o.prompt)}" class="w-full text-xs border border-zinc-300 rounded p-1 outline-none">
+              <textarea id="edit-desc-${o.id}" placeholder="Marketplace Description" class="w-full text-xs border border-zinc-300 rounded p-1 h-12 resize-none outline-none">${escapeHtml(o.marketplace_description || '')}</textarea>
+              <button onclick="updateMarketplaceListing('${o.id}')" class="w-full text-center bg-emerald-600 text-white font-bold text-xs py-1.5 rounded hover:bg-emerald-500">Update Listing</button>
+            </div>`;
+        }
+
+        return `
+          <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-3 relative">
+            <div class="absolute top-6 right-6 z-10 flex items-center gap-2 bg-white/80 backdrop-blur p-1 rounded-md shadow-sm border border-zinc-200">
+              <div class="has-tooltip cursor-pointer">
+                <span class="tooltip">${isOrdered ? 'ordered' : 'unordered'}</span>
+                ${isOrdered ? '📦' : '⭕'}
+              </div>
+              <div class="has-tooltip cursor-pointer">
+                <span class="tooltip">${isPublished ? 'published' : 'unpublished'}</span>
+                ${isPublished ? '🌐' : '🔒'}
+              </div>
+            </div>
+
+            <model-viewer src="${o.model_url}" camera-controls auto-rotate style="height:200px; background:#111827; border-radius:6px;"></model-viewer>
+            
+            <div class="flex items-center justify-between gap-2">
+              <h3 id="display-title-${o.id}" class="font-black text-zinc-950 truncate max-w-[85%]">${escapeHtml(o.prompt)}</h3>
+              <button onclick="triggerInlineRename('${o.id}')" class="text-zinc-400 hover:text-zinc-900 text-sm">✏️</button>
+            </div>
+            
+            <div class="pt-1">${actionControls}</div>
+          </div>`;
+      }).join("") : "<p class='text-sm text-zinc-500'>No models saved.</p>";
+    }
+
+    async function updateOrderStatus(id, newStatus) {
+      const { error } = await supabaseClient.from("lego_orders").update({ status: newStatus }).eq("id", id);
+      if (!error) loadOrders();
+    }
+
+    async function publishOrderToMarketplace(id) {
+      const { error } = await supabaseClient.from("lego_orders").update({ is_published: true, marketplace_title: "Custom LEGO piece", marketplace_description: "Shared workspace brick." }).eq("id", id);
+      if (!error) loadOrders();
+    }
+
+    async function updateMarketplaceListing(id) {
+      const title = document.getElementById(`edit-title-${id}`).value;
+      const desc = document.getElementById(`edit-desc-${id}`).value;
+      const { error } = await supabaseClient.from("lego_orders").update({ marketplace_title: title, marketplace_description: desc }).eq("id", id);
+      if (!error) alert("Listing metadata configurations synced!");
+    }
+
+    async function triggerInlineRename(id) {
+      const oldTitle = document.getElementById(`display-title-${id}`).innerText;
+      const nextName = prompt("Enter a new display name for this order instance asset:", oldTitle);
+      if (nextName && nextName.trim() !== "") {
+        const { error } = await supabaseClient.from("lego_orders").update({ prompt: nextName.trim() }).eq("id", id);
+        if (!error) loadOrders();
       }
-
-      orderCache = Object.fromEntries(data.map(o => [o.id, o]));
-      grid.innerHTML = data.length ? data.map(o => `
-        <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-3">
-          <model-viewer src="${o.modelUrl || o.model_url}" camera-controls auto-rotate style="height:200px; background:#111827; border-radius:6px;"></model-viewer>
-          <div>
-            <h3 class="font-black text-zinc-950 truncate">${escapeHtml(o.prompt)}</h3>
-            <p class="text-xs text-zinc-500 mt-1 font-mono">Status variable: <span class="text-zinc-900 font-bold uppercase">${o.status}</span></p>
-          </div>
-        </div>
-      `).join("") : "<p class='text-sm text-zinc-500 col-span-full'>No private brick concepts created yet.</p>";
     }
 
     async function loadMarketplace() {
-      const grid = document.getElementById("marketplaceGrid");
-      if (!grid) return;
+      const myGrid = document.getElementById("myMarketplaceGrid");
+      const communityGrid = document.getElementById("communityMarketplaceGrid");
+      if (!myGrid || !communityGrid) return;
 
-      grid.innerHTML = "<p class='text-sm text-zinc-500 font-semibold'>Reading shared global assets...</p>";
+      myGrid.innerHTML = "<p class='text-xs text-zinc-400'>Loading your items...</p>";
+      communityGrid.innerHTML = "<p class='text-xs text-zinc-400'>Loading community pipeline feed...</p>";
+
       const { data, error } = await supabaseClient.from("lego_orders").select("*").eq("is_published", true).order("created_at", { ascending: false });
+      if (error) return;
 
-      if (error) {
-        grid.innerHTML = `<p class='text-sm text-red-500'>Failed to synchronize marketplace profiles: ${error.message}</p>`;
-        return;
-      }
+      let myHtml = "";
+      let communityHtml = "";
 
-      grid.innerHTML = data.length ? data.map(m => `
-        <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-3">
-          <model-viewer src="${m.modelUrl || m.model_url}" camera-controls auto-rotate style="height:200px; background:#111827; border-radius:6px;"></model-viewer>
-          <h3 class="font-black text-zinc-950 truncate">${escapeHtml(m.marketplace_title || m.prompt)}</h3>
-        </div>
-      `).join("") : "<p class='text-sm text-zinc-500 col-span-full'>No catalog brick architectures published yet.</p>";
+      data.forEach(m => {
+        const template = `
+          <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-2">
+            <model-viewer src="${m.model_url}" camera-controls auto-rotate style="height:200px; background:#111827; border-radius:6px;"></model-viewer>
+            <h3 class="font-black text-zinc-950 truncate">${escapeHtml(m.marketplace_title || m.prompt)}</h3>
+            <p class="text-xs text-zinc-500 font-medium line-clamp-2">${escapeHtml(m.marketplace_description || 'No description provided.')}</p>
+          </div>`;
+
+        if (activeUser && m.user_id === activeUser.id) {
+          myHtml += template;
+        } else {
+          communityHtml += template;
+        }
+      });
+
+      myGrid.innerHTML = myHtml || "<p class='text-sm text-zinc-500 col-span-full'>You have not published any models here yet.</p>";
+      communityGrid.innerHTML = communityHtml || "<p class='text-sm text-zinc-500 col-span-full'>No public creations available yet.</p>";
     }
 
     function escapeHtml(str) {
