@@ -440,21 +440,52 @@
 
           if (task.status === "success") {
             clearInterval(interval);
-            currentRawModelUrl = task.output?.model || task.output?.glb;
-
-            const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ url: currentRawModelUrl })
-            });
-            globalGlbBuffer = await fileResponse.arrayBuffer();
-            currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
-            viewer.src = currentBlobUrl;
-
-            statusBox.classList.add("hidden");
-            viewerArea.classList.remove("hidden");
-            actionControls.classList.remove("hidden");
-            genBtn.disabled = false;
+  
+            // Fortified fallback layer to capture all variations of Tripo's v2 response shape
+            currentRawModelUrl = task.output?.model || 
+                                 task.output?.glb || 
+                                 task.result?.model || 
+                                 task.result?.gltf ||
+                                 (task.output && task.output.model_urls && task.output.model_urls.glb);
+          
+            // Trace the output string directly in your browser's Developer Console
+            console.log("Extracted Tripo Target Download Link Source:", currentRawModelUrl);
+          
+            if (!currentRawModelUrl) {
+                console.error("Critical: Could not extract a valid download URL from Tripo's task payload structure.", task);
+                alert("Model created successfully, but the output file path could not be resolved by the viewer.");
+                genBtn.disabled = false;
+                return;
+            }
+          
+            try {
+                const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ url: currentRawModelUrl })
+                });
+                
+                if (!fileResponse.ok) {
+                    const errorData = await fileResponse.json();
+                    throw new Error(errorData.error || `Server responded with status code: ${fileResponse.status}`);
+                }
+          
+                globalGlbBuffer = await fileResponse.arrayBuffer();
+                currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
+                
+                // Pass the local asset blob directly to your 3D viewer element
+                viewer.src = currentBlobUrl;
+          
+                statusBox.classList.add("hidden");
+                viewerArea.classList.remove("hidden");
+                actionControls.classList.remove("hidden");
+                genBtn.disabled = false;
+          
+            } catch (fetchError) {
+                console.error("Pipeline failure fetching or parsing the 3D asset:", fetchError);
+                alert(`Failed to load the generated 3D asset: ${fetchError.message}`);
+                genBtn.disabled = false;
+            }
           } else if (task.status === "failed") {
             clearInterval(interval);
             statusText.innerText = "Tripo execution cluster nodes failed rendering structures.";
