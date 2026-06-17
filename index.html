@@ -241,17 +241,14 @@
     let activeUser = null;
     let authMode = "login";
     
-    // Memory structures for chat logic strings
     let chatHistory = [];
     let compilationPromptCache = "";
 
-    // Set custom builder namespace parameter
     window.currentCreatorName = localStorage.getItem("tangiblx_alias") || "MasterBuilder";
 
     document.addEventListener("DOMContentLoaded", initializeApp);
 
     async function initializeApp() {
-      // Sync form display value with saved preference storage
       const aliasInput = document.getElementById("creatorAliasInput");
       if (aliasInput) aliasInput.value = window.currentCreatorName;
 
@@ -438,6 +435,7 @@
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Initialization failed.");
         
+        currentTaskId = data.task_id;
         pollTaskProgress(data.task_id);
       } catch (err) {
         statusText.innerText = `Error: ${err.message}`;
@@ -463,20 +461,27 @@
 
           if (task.status === "success") {
             clearInterval(interval);
+            console.log("Full Tripo Success Payload Object:", task);
   
-            // Fortified fallback layer to capture all variations of Tripo's v2 response shape
-            currentRawModelUrl = task.output?.model || 
-                                 task.output?.glb || 
-                                 task.result?.model || 
-                                 task.result?.gltf ||
-                                 (task.output && task.output.model_urls && task.output.model_urls.glb);
+            // TARGET SECURED: Explicitly isolate actual 3D geometries, ignoring any preview snapshots (.webp)
+            let meshUrl = null;
+            if (task.output) {
+              meshUrl = task.output.pbr_model || task.output.model;
+            } else if (task.result) {
+              meshUrl = task.result.pbr_model || task.result.model;
+            }
+
+            if (!meshUrl) {
+              const fallbacks = [task.model, task.glb, task.gltf];
+              meshUrl = fallbacks.find(u => u && typeof u === 'string' && !u.toLowerCase().endsWith('.webp'));
+            }
           
-            // Trace the output string directly in your browser's Developer Console
-            console.log("Extracted Tripo Target Download Link Source:", currentRawModelUrl);
+            currentRawModelUrl = meshUrl;
+            console.log("Extracted 3D Mesh Target Link:", currentRawModelUrl);
           
             if (!currentRawModelUrl) {
-                console.error("Critical: Could not extract a valid download URL from Tripo's task payload structure.", task);
-                alert("Model created successfully, but the output file path could not be resolved by the viewer.");
+                console.error("Critical Parsing Error:", task);
+                alert("Model created successfully, but the output mesh could not be isolated from the preview snapshots.");
                 genBtn.disabled = false;
                 return;
             }
@@ -490,13 +495,12 @@
                 
                 if (!fileResponse.ok) {
                     const errorData = await fileResponse.json();
-                    throw new Error(errorData.error || `Server responded with status code: ${fileResponse.status}`);
+                    throw new Error(errorData.error || `Server status: ${fileResponse.status}`);
                 }
           
                 globalGlbBuffer = await fileResponse.arrayBuffer();
                 currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
                 
-                // Pass the local asset blob directly to your 3D viewer element
                 viewer.src = currentBlobUrl;
           
                 statusBox.classList.add("hidden");
@@ -505,8 +509,8 @@
                 genBtn.disabled = false;
           
             } catch (fetchError) {
-                console.error("Pipeline failure fetching or parsing the 3D asset:", fetchError);
-                alert(`Failed to load the generated 3D asset: ${fetchError.message}`);
+                console.error("Fetch/Parse Failure:", fetchError);
+                alert(`Failed to load 3D asset into viewer: ${fetchError.message}`);
                 genBtn.disabled = false;
             }
           } else if (task.status === "failed") {
@@ -515,11 +519,11 @@
             spinner.classList.add("hidden");
             genBtn.disabled = false;
           } else {
-            statusText.innerText = `Sculpting mesh architecture... (${task.progress || 0}%)`;
+            const progress = task.progress !== undefined ? task.progress : (task.output?.progress || 0);
+            statusText.innerText = `Sculpting mesh architecture... (${progress}%)`;
           }
         } catch (e) {
-          clearInterval(interval);
-          genBtn.disabled = false;
+          console.error("Polling error encountered:", e);
         }
       }, 4000);
     }
@@ -577,17 +581,13 @@
 
         let actionControls = "";
         
-        // 1. Order Control: Only show if it hasn't been ordered yet
         if (!isOrdered) {
           actionControls += `<button onclick="updateOrderStatus('${o.id}', 'ordered')" class="w-full text-center bg-red-600 text-white font-bold text-xs py-2 rounded shadow hover:bg-red-500 mb-2">Order Piece</button>`;
         }
 
-        // 2. Marketplace Controls: Decoupled from the order status entirely
         if (!isPublished) {
-          // Can be published at any time now
           actionControls += `<button onclick="publishOrderToMarketplace('${o.id}')" class="w-full text-center bg-zinc-900 text-white font-bold text-xs py-2 rounded shadow hover:bg-zinc-800">Publish to Marketplace</button>`;
         } else {
-          // If already published, always show the editor controls to modify the live listing
           actionControls += `
             <div class="space-y-2 border-t border-zinc-100 pt-2">
               <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Live Marketplace Configurations</label>
@@ -704,7 +704,7 @@
       loadMarketplace();
     }
 
-    function escapeHtml(str) {
+    style = function escapeHtml(str) {
       return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
   </script>
