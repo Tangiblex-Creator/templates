@@ -576,13 +576,21 @@
         const isPublished = o.is_published === true;
 
         let actionControls = "";
+        
+        // 1. Order Control: Only show if it hasn't been ordered yet
         if (!isOrdered) {
-          actionControls = `<button onclick="updateOrderStatus('${o.id}', 'ordered')" class="w-full text-center bg-red-600 text-white font-bold text-xs py-2 rounded shadow hover:bg-red-500">Order Piece</button>`;
-        } else if (isOrdered && !isPublished) {
-          actionControls = `<button onclick="publishOrderToMarketplace('${o.id}')" class="w-full text-center bg-zinc-900 text-white font-bold text-xs py-2 rounded shadow hover:bg-zinc-800">Publish to Marketplace</button>`;
-        } else if (isPublished) {
-          actionControls = `
+          actionControls += `<button onclick="updateOrderStatus('${o.id}', 'ordered')" class="w-full text-center bg-red-600 text-white font-bold text-xs py-2 rounded shadow hover:bg-red-500 mb-2">Order Piece</button>`;
+        }
+
+        // 2. Marketplace Controls: Decoupled from the order status entirely
+        if (!isPublished) {
+          // Can be published at any time now
+          actionControls += `<button onclick="publishOrderToMarketplace('${o.id}')" class="w-full text-center bg-zinc-900 text-white font-bold text-xs py-2 rounded shadow hover:bg-zinc-800">Publish to Marketplace</button>`;
+        } else {
+          // If already published, always show the editor controls to modify the live listing
+          actionControls += `
             <div class="space-y-2 border-t border-zinc-100 pt-2">
+              <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Live Marketplace Configurations</label>
               <input id="edit-title-${o.id}" type="text" placeholder="Marketplace Title" value="${escapeHtml(o.marketplace_title || o.prompt)}" class="w-full text-xs border border-zinc-300 rounded p-1 outline-none">
               <textarea id="edit-desc-${o.id}" placeholder="Marketplace Description" class="w-full text-xs border border-zinc-300 rounded p-1 h-12 resize-none outline-none">${escapeHtml(o.marketplace_description || '')}</textarea>
               <button onclick="updateMarketplaceListing('${o.id}')" class="w-full text-center bg-emerald-600 text-white font-bold text-xs py-1.5 rounded hover:bg-emerald-500">Update Listing</button>
