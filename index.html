@@ -192,15 +192,31 @@
 
     <section id="marketplace" class="section">
       <div class="mx-auto max-w-6xl px-4 py-8 space-y-10">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
+          <div>
+            <h2 class="text-3xl font-black tracking-tight">TangiblX Community Studio</h2>
+            <p class="text-sm text-zinc-500 font-medium">Publish, look through, and export custom architectural elements.</p>
+          </div>
+          
+          <div class="flex items-center gap-2 bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-lg self-start sm:self-auto shadow-inner">
+            <span class="text-xs font-bold text-zinc-500 uppercase tracking-wide">Publishing As:</span>
+            <input type="text" id="creatorAliasInput" value="MasterBuilder" class="bg-white border border-zinc-300 text-xs text-zinc-950 font-bold rounded px-2 py-1 focus:outline-none focus:border-red-500 w-32">
+            <button onclick="updateGlobalAlias()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[11px] font-black px-2.5 py-1 rounded transition">Save</button>
+          </div>
+        </div>
+
         <div>
           <p class="text-xs font-black uppercase tracking-wider text-red-600">My Creations</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Your Published Architecture</h2>
+          <h2 class="mt-2 text-xl font-black tracking-tight text-zinc-800">Your Published Architecture</h2>
           <div id="myMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-4"></div>
         </div>
+        
         <hr class="border-zinc-200" />
+        
         <div>
           <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Public Feed</p>
-          <h2 class="mt-2 text-3xl font-black tracking-tight">Community brick ideas</h2>
+          <h2 class="mt-2 text-xl font-black tracking-tight text-zinc-800">Community brick ideas</h2>
           <div id="communityMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-4"></div>
         </div>
       </div>
@@ -229,9 +245,16 @@
     let chatHistory = [];
     let compilationPromptCache = "";
 
+    // Set custom builder namespace parameter
+    window.currentCreatorName = localStorage.getItem("tangiblx_alias") || "MasterBuilder";
+
     document.addEventListener("DOMContentLoaded", initializeApp);
 
     async function initializeApp() {
+      // Sync form display value with saved preference storage
+      const aliasInput = document.getElementById("creatorAliasInput");
+      if (aliasInput) aliasInput.value = window.currentCreatorName;
+
       try {
         const { data } = await supabaseClient.auth.getSession();
         activeUser = data.session?.user || null;
@@ -597,7 +620,12 @@
     }
 
     async function publishOrderToMarketplace(id) {
-      const { error } = await supabaseClient.from("lego_orders").update({ is_published: true, marketplace_title: "Custom LEGO piece", marketplace_description: "Shared workspace brick." }).eq("id", id);
+      const { error } = await supabaseClient.from("lego_orders").update({ 
+        is_published: true, 
+        marketplace_title: "Custom LEGO piece", 
+        marketplace_description: "Shared workspace brick.",
+        author_name: window.currentCreatorName 
+      }).eq("id", id);
       if (!error) loadOrders();
     }
 
@@ -633,10 +661,15 @@
 
       data.forEach(m => {
         const template = `
-          <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-2">
+          <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-2 flex flex-col justify-between">
             <model-viewer src="${m.model_url}" camera-controls auto-rotate style="height:200px; background:#111827; border-radius:6px;"></model-viewer>
-            <h3 class="font-black text-zinc-950 truncate">${escapeHtml(m.marketplace_title || m.prompt)}</h3>
-            <p class="text-xs text-zinc-500 font-medium line-clamp-2">${escapeHtml(m.marketplace_description || 'No description provided.')}</p>
+            <div>
+              <h3 class="font-black text-zinc-950 truncate">${escapeHtml(m.marketplace_title || m.prompt)}</h3>
+              <p class="text-xs text-zinc-500 font-medium line-clamp-2">${escapeHtml(m.marketplace_description || 'No description provided.')}</p>
+            </div>
+            <div class="pt-2 border-t border-zinc-100 flex items-center justify-between text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+              <span>By: <span class="text-red-600">${escapeHtml(m.user_id === activeUser?.id ? window.currentCreatorName : (m.author_name || 'AnonymBrick'))}</span></span>
+            </div>
           </div>`;
 
         if (activeUser && m.user_id === activeUser.id) {
@@ -648,6 +681,19 @@
 
       myGrid.innerHTML = myHtml || "<p class='text-sm text-zinc-500 col-span-full'>You have not published any models here yet.</p>";
       communityGrid.innerHTML = communityHtml || "<p class='text-sm text-zinc-500 col-span-full'>No public creations available yet.</p>";
+    }
+
+    window.updateGlobalAlias = function() {
+      const inputField = document.getElementById("creatorAliasInput");
+      const nextAlias = inputField ? inputField.value.trim() : "";
+      if (!nextAlias) {
+        alert("Publishing name cannot be completely blank!");
+        return;
+      }
+      window.currentCreatorName = nextAlias;
+      localStorage.setItem("tangiblx_alias", nextAlias);
+      console.log("Workspace builder context alias reconfigured successfully:", window.currentCreatorName);
+      loadMarketplace();
     }
 
     function escapeHtml(str) {
