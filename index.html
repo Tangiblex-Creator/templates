@@ -91,7 +91,7 @@
             </div>
           </div>
 
-          <div class="space-y-2">
+          <div class="space-y-3">
             <div class="flex gap-2">
               <button onclick="toggleTemplateModal(true)" class="rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-lg hover:bg-zinc-100 transition shadow-xs" title="Select LEGO Template Base Mesh">
                 🧱
@@ -102,17 +102,13 @@
                 <input type="file" id="imageInput" accept="image/*" class="hidden">
               </button>
               
-              <input type="text" id="chatInput" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-xs outline-none focus:border-red-500" placeholder="Ask for color concepts or description ideas...">
+              <input type="text" id="chatInput" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-xs outline-none focus:border-red-500" placeholder="Discuss finishes, rough reflections, plastics...">
               <button id="sendChatBtn" onclick="sendChatMessage()" class="rounded-md bg-zinc-900 px-3 text-xs font-black text-white hover:bg-zinc-800">Discuss</button>
             </div>
 
-            <div class="bg-zinc-900 text-white p-3 rounded-lg space-y-2">
-              <label class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block">Final Visual Texture Definition Prompt</label>
-              <div class="flex gap-2">
-                <input type="text" id="texturePromptInput" class="flex-1 text-xs rounded bg-zinc-800 text-white border border-zinc-700 px-2 py-2 outline-none focus:border-red-500" placeholder="Specify exact final maps (e.g., glossy transparent red plastic, scratched copper)...">
-                <button id="bakeBtn" onclick="triggerTemplateTexturePipeline()" class="rounded bg-red-600 px-4 text-xs font-black text-white hover:bg-red-500 transition shadow-md">Bake Custom Finish</button>
-              </div>
-            </div>
+            <button id="bakeBtn" disabled onclick="finalizeAndBakeTexture()" class="w-full rounded-lg bg-zinc-300 text-zinc-500 py-3 text-xs font-black uppercase tracking-wider transition cursor-not-allowed shadow-sm">
+              Finalize Design (Awaiting Assistant Confirmation)
+            </button>
           </div>
         </div>
 
@@ -123,7 +119,7 @@
             
             <div id="statusBox" class="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-10 text-center">
               <div id="spinner" class="mx-auto mb-3 hidden h-7 w-7 animate-spin rounded-full border-[3px] border-red-600 border-t-transparent"></div>
-              <p id="statusText" class="text-xs font-semibold text-zinc-500">Select a structural blueprint brick configuration via the (🧱) action button, configure a texture profile, and execute the baking engine.</p>
+              <p id="statusText" class="text-xs font-semibold text-zinc-500">Select a structural blueprint brick configuration via the (🧱) action button, consult with the assistant to lock your design parameters, and click finalize.</p>
             </div>
 
             <div id="viewerArea" class="mt-5 hidden space-y-4 flex-1">
@@ -158,7 +154,7 @@
         <div onclick="selectBrickTemplate('Standard 1x1 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-templates/brick_1x1.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
           <span class="text-3xl block mb-1">🧱</span>
           <span class="text-xs font-black block text-zinc-900">Standard 1x1 Brick</span>
-          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Converted OBJ Mesh</span>
+          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Template glb</span>
         </div>
 
         <div onclick="selectBrickTemplate('Standard 2x4 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-templates/brick_2x4.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
@@ -188,6 +184,7 @@
     let authMode = "login";
     let chatHistory = [];
     let selectedTemplateUrl = "";
+    let systemInferredPrompt = "";
 
     window.currentCreatorName = localStorage.getItem("tangiblx_alias") || "MasterBuilder";
 
@@ -246,8 +243,8 @@
     function selectBrickTemplate(name, url) {
       selectedTemplateUrl = url;
       document.getElementById("activeTemplateBadge").innerText = `Active Template: ${name}`;
-      toggleTemplateModal(false); // Snap close pop-up modal panel view frame element automatically
-      appendMessage("assistant", `Activated ${name} blueprint geometry container. What kind of texture, plating or color profile should we wrap onto this piece?`);
+      toggleTemplateModal(false);
+      appendMessage("assistant", `Activated ${name} structural blueprint. Let's design its look! Tell me what materials or plastic colors you want to wrap onto this piece.`);
     }
 
     function appendMessage(sender, text) {
@@ -274,31 +271,43 @@
         });
         const data = await res.json();
         chatHistory = data.history;
-        appendMessage("assistant", data.reply);
+
+        let reply = data.reply;
+        // Check if the AI has flagged the session as complete
+        if (reply.includes("[READY]")) {
+          reply = reply.replace("[READY]", "").trim();
+          unlockBakeButton();
+        }
+
+        appendMessage("assistant", reply);
       } catch (e) {
-        appendMessage("assistant", "Assistant routing cluster offline.");
+        appendMessage("assistant", "Assistant connectivity failed.");
       }
+    }
+
+    function unlockBakeButton() {
+      const bakeBtn = document.getElementById("bakeBtn");
+      bakeBtn.disabled = false;
+      bakeBtn.className = "w-full rounded-lg bg-red-600 text-white py-3 text-xs font-black uppercase tracking-wider transition hover:bg-red-500 cursor-pointer shadow-md";
+      bakeBtn.innerText = "🚀 Finalize & Bake Design Layout";
     }
 
     function resetChat() {
       chatHistory = [];
       selectedTemplateUrl = "";
+      systemInferredPrompt = "";
       document.getElementById("activeTemplateBadge").innerText = "No template brick selected yet";
-      document.getElementById("chatBox").innerHTML = `<div class="bg-zinc-100 p-2.5 rounded-lg max-w-[85%] text-zinc-700 font-medium">Workspace context cleared. Select a brick and ask for ideas!</div>`;
+      
+      const bakeBtn = document.getElementById("bakeBtn");
+      bakeBtn.disabled = true;
+      bakeBtn.className = "w-full rounded-lg bg-zinc-300 text-zinc-500 py-3 text-xs font-black uppercase tracking-wider transition cursor-not-allowed shadow-sm";
+      bakeBtn.innerText = "Finalize Design (Awaiting Assistant Confirmation)";
+
+      document.getElementById("chatBox").innerHTML = `<div class="bg-zinc-100 p-2.5 rounded-lg max-w-[85%] text-zinc-700 font-medium">Workspace reset. Select a brick and ask for ideas!</div>`;
     }
 
-    async function triggerTemplateTexturePipeline() {
-      if (!selectedTemplateUrl) {
-        alert("You must explicitly select a brick blueprint via the (🧱) template menu button first!");
-        return;
-      }
-
-      const promptField = document.getElementById("texturePromptInput");
-      const promptText = promptField ? promptField.value.trim() : "";
-      if (!promptText) {
-        alert("Please write a material texture generation prompt definition block!");
-        return;
-      }
+    async function finalizeAndBakeTexture() {
+      if (!selectedTemplateUrl) return alert("Please select a brick template geometry container first!");
 
       const bakeBtn = document.getElementById("bakeBtn");
       const statusText = document.getElementById("statusText");
@@ -309,23 +318,35 @@
 
       bakeBtn.disabled = true;
       statusBox.classList.remove("hidden");
-      statusText.innerText = "Connecting to Tripo asset layer node. Sending physical file matrix & procedural requests...";
+      statusText.innerText = "Processing consultation records... Building dense procedural texture instructions...";
       spinner.classList.remove("hidden");
       viewerArea.classList.add("hidden");
       actionControls.classList.add("hidden");
 
       try {
+        // Step 1: Tell backend to summarize chat into detailed Tripo format prompt
+        const summaryRes = await fetch(`${BACKEND_BASE_URL}/summarize-prompt`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ history: chatHistory })
+        });
+        const summaryData = await summaryRes.json();
+        systemInferredPrompt = summaryData.prompt;
+
+        statusText.innerText = `Compiled Prompt: "${systemInferredPrompt}". Shipping mapping task to Tripo cluster...`;
+
+        // Step 2: Push the summarized prompt into Tripo asset retexturer node
         const response = await fetch(`${BACKEND_BASE_URL}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model_url: selectedTemplateUrl,
-            prompt: promptText
+            prompt: systemInferredPrompt
           })
         });
         
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Handshake assignment node failure.");
+        if (!response.ok) throw new Error(data.error || "Handshake failure.");
         
         currentTaskId = data.task_id;
         pollTaskProgress(data.task_id);
@@ -342,7 +363,6 @@
       const spinner = document.getElementById("spinner");
       const viewerArea = document.getElementById("viewerArea");
       const viewer = document.getElementById("3dPreview");
-      const bakeBtn = document.getElementById("bakeBtn");
       const statusBox = document.getElementById("statusBox");
       const actionControls = document.getElementById("actionControls");
 
@@ -354,15 +374,8 @@
 
           if (task.status === "success") {
             clearInterval(interval);
-            
             let meshUrl = task.output?.pbr_model || task.output?.model || task.result?.pbr_model || task.result?.model;
             currentRawModelUrl = meshUrl;
-
-            if (!currentRawModelUrl) {
-                alert("Texture map compilation completed, but file link lost integrity.");
-                bakeBtn.disabled = false;
-                return;
-            }
 
             const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
               method: "POST",
@@ -377,16 +390,13 @@
             statusBox.classList.add("hidden");
             viewerArea.classList.remove("hidden");
             actionControls.classList.remove("hidden");
-            bakeBtn.disabled = false;
-
           } else if (task.status === "failed") {
             clearInterval(interval);
-            statusText.innerText = "Baking execution failed on cluster generation segments.";
+            statusText.innerText = "Baking execution failed on cluster pipeline.";
             spinner.classList.add("hidden");
-            bakeBtn.disabled = false;
           } else {
             const progress = task.progress !== undefined ? task.progress : (task.output?.progress || 0);
-            statusText.innerText = `Baking and mapping high-resolution procedural layouts... (${progress}%)`;
+            statusText.innerText = `Baking high-resolution textures onto template... (${progress}%)`;
           }
         } catch (e) { console.error(e); }
       }, 4000);
@@ -394,7 +404,7 @@
 
     async function saveInitialDraft() {
       const shipMsg = document.getElementById("shipMessage");
-      shipMsg.innerText = "Uploading asset reference signatures...";
+      shipMsg.innerText = "Saving profile metadata...";
       try {
         const syncRes = await fetch(`${BACKEND_BASE_URL}/save-to-storage`, {
           method: "POST",
@@ -402,11 +412,10 @@
           body: JSON.stringify({ rawModelUrl: currentRawModelUrl })
         });
         const syncResult = await syncRes.json();
-        const labelText = document.getElementById("texturePromptInput").value || "Custom Texture Template Piece";
 
         await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
-          prompt: labelText,
+          prompt: systemInferredPrompt || "Textured Custom LEGO Brick",
           input_type: "template_retexture",
           model_url: syncResult.modelUrl,
           status: "saved",
