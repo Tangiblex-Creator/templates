@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TangiblX | Custom LEGO Demo</title>
+  <title>TangiblX | Precise LEGO Texture Studio</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,35 +16,23 @@
     .nav-btn[data-active="true"] { background: #111827; color: #ffffff; border-color: #334155; }
     .section { display: none; }
     .section[data-visible="true"] { display: block; }
-    
-    .has-tooltip { position: relative; display: inline-block; }
-    .tooltip {
-      visibility: hidden; position: absolute; bottom: 125%; left: 50%;
-      transform: translateX(-50%); background-color: #1f2937; color: #fff;
-      text-align: center; padding: 4px 8px; border-radius: 4px; font-size: 11px;
-      white-space: nowrap; z-index: 50; opacity: 0; transition: opacity 0.2s;
-    }
-    .has-tooltip:hover .tooltip { visibility: visible; opacity: 1; }
-    
     .chat-box::-webkit-scrollbar { width: 6px; }
-    .chat-box::-webkit-scrollbar-track { background: transparent; }
     .chat-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen bg-zinc-50 text-zinc-950">
+
   <header class="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
       <button onclick="showSection('landing')" class="text-left">
         <span class="block text-xl font-black tracking-tight text-red-600">TangiblX</span>
-        <span class="block text-xs font-semibold uppercase tracking-wider text-zinc-500">Custom LEGO demo</span>
+        <span class="block text-xs font-semibold uppercase tracking-wider text-zinc-500">Precise LEGO Studio</span>
       </button>
-
       <nav id="appNav" class="hidden items-center gap-2">
         <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="workshop" onclick="showSection('workshop')">Workshop</button>
         <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="orders" onclick="showSection('orders')">Orders</button>
         <button class="nav-btn rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100" data-target="marketplace" onclick="showSection('marketplace')">Marketplace</button>
       </nav>
-
       <div class="flex items-center gap-2">
         <span id="userEmail" class="hidden max-w-[180px] truncate text-sm font-medium text-zinc-500"></span>
         <button id="loginTopBtn" onclick="showSection('auth')" class="rounded-md bg-zinc-900 px-4 py-2 text-sm font-bold text-white hover:bg-zinc-700">Log in</button>
@@ -56,24 +44,12 @@
   <main>
     <section id="landing" class="section" data-visible="true">
       <div class="border-b border-zinc-200 bg-white">
-        <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div>
-            <p class="mb-4 inline-flex rounded-md bg-yellow-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-950">AI Design Assistant Active</p>
-            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-zinc-950 md:text-6xl">Chat with an AI architect to sculpt custom brick builds.</h1>
-            <p class="mt-5 max-w-2xl text-lg leading-8 text-zinc-600">TangiblX now features an interactive design assistant. Upload an image, explain your changes, chat through details, and let our pipeline compile absolute precision 3D models automatically.</p>
-            <div class="mt-8 flex flex-wrap gap-3">
-              <button onclick="showSection('auth', 'signup')" class="rounded-md bg-red-600 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-red-500">Create account</button>
-              <button onclick="showSection('auth', 'login')" class="rounded-md border border-zinc-300 px-5 py-3 text-sm font-black text-zinc-900 hover:bg-zinc-100">Log in</button>
-            </div>
-          </div>
-          <div class="rounded-lg border border-zinc-200 bg-zinc-100 p-5 shadow-sm">
-            <div class="grid grid-cols-5 gap-2">
-              <div class="h-16 rounded-md bg-red-500 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-yellow-300 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-blue-500 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-emerald-500 shadow-inner"></div>
-              <div class="h-16 rounded-md bg-zinc-900 shadow-inner"></div>
-            </div>
+        <div class="mx-auto max-w-3xl text-center px-4 py-20">
+          <p class="mb-4 inline-flex rounded-md bg-red-100 px-3 py-1 text-xs font-black uppercase tracking-wider text-red-600">CAD-Accurate Templates</p>
+          <h1 class="text-4xl font-black tracking-tight text-zinc-950 md:text-6xl">Texture precise, official LEGO brick configurations.</h1>
+          <p class="mt-5 text-lg text-zinc-600">No morphing artifacts or weird walls. Choose an absolutely exact 3D brick template file and apply stunning high-fidelity PBR colors, plastics, metallic layers, and finishes via AI.</p>
+          <div class="mt-8 flex justify-center gap-3">
+            <button onclick="showSection('auth', 'signup')" class="rounded-md bg-red-600 px-6 py-3 text-sm font-black text-white hover:bg-red-500">Get Started</button>
           </div>
         </div>
       </div>
@@ -86,79 +62,68 @@
             <button id="loginTab" onclick="setAuthMode('login')" class="flex-1 rounded-md bg-white px-3 py-2 text-sm font-black shadow-sm">Log in</button>
             <button id="signupTab" onclick="setAuthMode('signup')" class="flex-1 rounded-md px-3 py-2 text-sm font-black text-zinc-500">Sign up</button>
           </div>
-          <h2 id="authTitle" class="text-2xl font-black">Log in to TangiblX</h2>
+          <h2 id="authTitle" class="text-2xl font-black">Log in</h2>
           <div class="mt-5 space-y-4">
-            <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Email</label>
-              <input id="authEmail" type="email" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="you@example.com">
-            </div>
-            <div>
-              <label class="mb-2 block text-xs font-black uppercase tracking-wider text-zinc-500">Password</label>
-              <input id="authPassword" type="password" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="At least 6 characters">
-            </div>
-            <button id="authSubmitBtn" onclick="submitAuth()" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-500">Log in</button>
-            <p id="authMessage" class="min-h-6 text-sm font-semibold text-zinc-600"></p>
+            <input id="authEmail" type="email" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Email address">
+            <input id="authPassword" type="password" class="w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Password">
+            <button onclick="submitAuth()" id="authSubmitBtn" class="w-full rounded-md bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-500">Log in</button>
+            <p id="authMessage" class="text-xs text-red-500 font-semibold"></p>
           </div>
         </div>
       </div>
     </section>
 
     <section id="workshop" class="section">
-      <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[1.2fr_0.8fr]">
         
-        <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm flex flex-col h-[620px]">
-          <div class="border-b border-zinc-100 pb-3 flex justify-between items-center">
+        <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm flex flex-col h-[620px] justify-between">
+          <div class="border-b border-zinc-100 pb-2 flex justify-between items-center">
             <div>
-              <p class="text-xs font-black uppercase tracking-wider text-red-600">Studio Assistant</p>
-              <h2 class="text-xl font-black tracking-tight">Refine Your Brick Idea</h2>
+              <p class="text-xs font-black uppercase tracking-wider text-red-600">Material Selection Consultation</p>
+              <div id="activeTemplateBadge" class="text-[11px] font-bold text-zinc-500 mt-0.5">No template brick selected yet</div>
             </div>
-            <button onclick="resetChat()" class="text-[11px] font-black uppercase tracking-wider border border-zinc-200 px-2 py-1 rounded text-zinc-500 hover:bg-zinc-50">Reset Chat</button>
+            <button onclick="resetChat()" class="text-[9px] font-bold uppercase tracking-wider border px-2 py-0.5 rounded text-zinc-400">Reset Chat</button>
           </div>
-
-          <div id="chatBox" class="chat-box flex-1 overflow-y-auto my-4 space-y-3 pr-1 text-sm">
-            <div class="bg-zinc-100 text-zinc-800 p-3 rounded-lg max-w-[85%] font-medium">
-              Hey! 👋 I'm your brick design assistant. Upload an image template or describe what you want to construct, and tell me any specific differences or tweaks you'd like to see. I'll make sure it looks perfect before sending it to the 3D renderer!
-            </div>
-          </div>
-
-          <div id="imagePreviewContainer" class="hidden mb-3 flex items-center gap-3 bg-zinc-50 p-2 rounded-lg border border-zinc-200">
-            <img id="imgPreview" class="h-12 w-12 rounded-md border border-zinc-200 bg-white object-contain p-1" alt="Preview">
-            <div class="flex-1 min-w-0">
-              <p id="previewFileName" class="text-xs font-bold text-zinc-800 truncate">Uploaded_Image.png</p>
-              <button onclick="clearSelectedImage(event)" class="text-[10px] font-black text-red-600 uppercase hover:underline">Remove Image</button>
+          
+          <div id="chatBox" class="chat-box flex-1 overflow-y-auto my-3 space-y-2 pr-1 text-xs">
+            <div class="bg-zinc-100 p-2.5 rounded-lg max-w-[85%] font-medium text-zinc-700">
+              Pick a mechanical LEGO shape blueprint using the template button (🧱) below, then explain what look or tactile properties you want to overlay on the geometry!
             </div>
           </div>
 
           <div class="space-y-2">
             <div class="flex gap-2">
-              <button onclick="document.getElementById('imageInput').click()" class="rounded-md border border-zinc-300 bg-zinc-50 p-3 text-xl hover:bg-zinc-100" title="Upload Reference Image">
+              <button onclick="toggleTemplateModal(true)" class="rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-lg hover:bg-zinc-100 transition shadow-xs" title="Select LEGO Template Base Mesh">
+                🧱
+              </button>
+
+              <button onclick="document.getElementById('imageInput').click()" class="rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-lg hover:bg-zinc-100 transition shadow-xs" title="Upload Reference Image">
                 📷
-                <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="hidden">
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
               </button>
               
-              <input type="text" id="chatInput" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none focus:border-red-500" placeholder="Say what you want to change, add, or fix...">
-              
-              <button id="sendChatBtn" onclick="sendChatMessage()" class="rounded-md bg-red-600 px-4 text-sm font-black text-white hover:bg-red-500">Send</button>
+              <input type="text" id="chatInput" onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-xs outline-none focus:border-red-500" placeholder="Ask for color concepts or description ideas...">
+              <button id="sendChatBtn" onclick="sendChatMessage()" class="rounded-md bg-zinc-900 px-3 text-xs font-black text-white hover:bg-zinc-800">Discuss</button>
             </div>
-            
-            <button id="generateBtn" onclick="trigger3DRenderPipeline()" class="w-full rounded-md bg-zinc-950 py-3 text-xs font-black uppercase tracking-wider text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50">
-              ✨ Finalize Design & Render 3D Model
-            </button>
+
+            <div class="bg-zinc-900 text-white p-3 rounded-lg space-y-2">
+              <label class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block">Final Visual Texture Definition Prompt</label>
+              <div class="flex gap-2">
+                <input type="text" id="texturePromptInput" class="flex-1 text-xs rounded bg-zinc-800 text-white border border-zinc-700 px-2 py-2 outline-none focus:border-red-500" placeholder="Specify exact final maps (e.g., glossy transparent red plastic, scratched copper)...">
+                <button id="bakeBtn" onclick="triggerTemplateTexturePipeline()" class="rounded bg-red-600 px-4 text-xs font-black text-white hover:bg-red-500 transition shadow-md">Bake Custom Finish</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm flex flex-col justify-between h-[620px]">
+        <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm flex flex-col justify-between h-[620px]">
           <div>
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Preview Engine</p>
-                <h2 class="mt-1 text-2xl font-black">Generated Output</h2>
-              </div>
-            </div>
+            <p class="text-xs font-black uppercase tracking-wider text-zinc-400">Render Preview Target</p>
+            <h2 class="text-2xl font-black mt-0.5">Baked Output</h2>
             
             <div id="statusBox" class="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-10 text-center">
               <div id="spinner" class="mx-auto mb-3 hidden h-7 w-7 animate-spin rounded-full border-[3px] border-red-600 border-t-transparent"></div>
-              <p id="statusText" class="text-sm font-semibold text-zinc-600">The 3D preview model will build here once your design conversation is finalized.</p>
+              <p id="statusText" class="text-xs font-semibold text-zinc-500">Select a structural blueprint brick configuration via the (🧱) action button, configure a texture profile, and execute the baking engine.</p>
             </div>
 
             <div id="viewerArea" class="mt-5 hidden space-y-4 flex-1">
@@ -166,71 +131,44 @@
             </div>
           </div>
 
-          <div id="actionControls" class="hidden space-y-3 pt-4 border-t border-zinc-100">
-            <div class="bg-zinc-50 border border-zinc-200 p-3 rounded-lg space-y-2">
-              <label class="text-[10px] font-black uppercase tracking-wider text-zinc-500 block">Mesh Refining Layer (Retexture Active Model ID)</label>
-              <div class="flex gap-2">
-                <input type="text" id="texturePromptInput" class="flex-1 text-xs rounded border border-zinc-300 bg-white px-2 py-2 outline-none focus:border-red-500" placeholder="Describe materials (e.g., weathered chrome, shiny gold plastic, camo)...">
-                <button id="retextureBtn" onclick="triggerTexturePipeline()" class="rounded bg-red-600 px-3 text-xs font-black text-white hover:bg-red-500 transition">Apply Texture</button>
-              </div>
+          <div id="actionControls" class="hidden space-y-2 pt-4 border-t border-zinc-100">
+            <div class="grid gap-2 grid-cols-2">
+              <button onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 py-2.5 text-xs font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
+              <button onclick="saveInitialDraft()" class="rounded-md bg-zinc-950 py-2.5 text-xs font-black text-white hover:bg-zinc-800">Save to Portfolio</button>
             </div>
-
-            <div class="grid gap-3 sm:grid-cols-2">
-              <button id="downloadBtn" onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
-              <button id="shipBtn" onclick="saveInitialDraft()" class="rounded-md bg-zinc-900 px-4 py-3 text-sm font-black text-white hover:bg-zinc-800">Save to Orders Portfolio</button>
-            </div>
-            <p id="shipMessage" class="min-h-6 text-xs font-semibold text-zinc-500 mt-1"></p>
+            <p id="shipMessage" class="min-h-4 text-[11px] font-bold text-zinc-500 mt-1"></p>
           </div>
         </div>
 
       </div>
     </section>
 
-    <section id="orders" class="section">
-      <div class="mx-auto max-w-6xl px-4 py-8">
-        <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p class="text-xs font-black uppercase tracking-wider text-red-600">Dashboard</p>
-            <h2 class="mt-2 text-3xl font-black tracking-tight">Your saved designs</h2>
-          </div>
-          <button onclick="loadOrders()" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black hover:bg-zinc-100">Refresh</button>
-        </div>
-        <div id="ordersGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3"></div>
-      </div>
-    </section>
-
-    <section id="marketplace" class="section">
-      <div class="mx-auto max-w-6xl px-4 py-8 space-y-10">
-        
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
-          <div>
-            <h2 class="text-3xl font-black tracking-tight">TangiblX Community Studio</h2>
-            <p class="text-sm text-zinc-500 font-medium">Publish, look through, and export custom architectural elements.</p>
-          </div>
-          
-          <div class="flex items-center gap-2 bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-lg self-start sm:self-auto shadow-inner">
-            <span class="text-xs font-bold text-zinc-500 uppercase tracking-wide">Publishing As:</span>
-            <input type="text" id="creatorAliasInput" value="MasterBuilder" class="bg-white border border-zinc-300 text-xs text-zinc-950 font-bold rounded px-2 py-1 focus:outline-none focus:border-red-500 w-32">
-            <button onclick="updateGlobalAlias()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[11px] font-black px-2.5 py-1 rounded transition">Save</button>
-          </div>
-        </div>
-
-        <div>
-          <p class="text-xs font-black uppercase tracking-wider text-red-600">My Creations</p>
-          <h2 class="mt-2 text-xl font-black tracking-tight text-zinc-800">Your Published Architecture</h2>
-          <div id="myMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-4"></div>
-        </div>
-        
-        <hr class="border-zinc-200" />
-        
-        <div>
-          <p class="text-xs font-black uppercase tracking-wider text-zinc-500">Public Feed</p>
-          <h2 class="mt-2 text-xl font-black tracking-tight text-zinc-800">Community brick ideas</h2>
-          <div id="communityMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-4"></div>
-        </div>
-      </div>
-    </section>
+    <section id="orders" class="section"><div class="mx-auto max-w-6xl px-4 py-8"><h2 class="text-2xl font-black mb-4">Your saved designs</h2><div id="ordersGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3"></div></div></section>
+    <section id="marketplace" class="section"><div class="mx-auto max-w-6xl px-4 py-8 space-y-6"><div class="flex items-center justify-between border-b pb-4"><h2 class="text-2xl font-black">TangiblX Community</h2><div class="flex items-center gap-2 bg-zinc-100 p-1 px-2 rounded border"><span class="text-[10px] font-black uppercase text-zinc-400">Alias:</span><input type="text" id="creatorAliasInput" class="bg-white border text-xs px-2 py-0.5 rounded w-24"><button onclick="updateGlobalAlias()" class="bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded">Save</button></div></div><div><h3 class="font-bold text-sm text-zinc-400 uppercase">My Creations</h3><div id="myMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-2"></div></div><hr><div><h3 class="font-bold text-sm text-zinc-400 uppercase">Community Feed</h3><div id="communityMarketplaceGrid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-2"></div></div></div></section>
   </main>
+
+  <div id="templateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-xl border border-zinc-200 max-w-md w-full p-5 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-zinc-100 pb-2">
+        <h3 class="font-black text-lg text-zinc-950 tracking-tight">Select LEGO Brick Template</h3>
+        <button onclick="toggleTemplateModal(false)" class="text-zinc-400 hover:text-zinc-900 font-bold text-sm">✕</button>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div onclick="selectBrickTemplate('Standard 1x1 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-templates/brick_1x1.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
+          <span class="text-3xl block mb-1">🧱</span>
+          <span class="text-xs font-black block text-zinc-900">Standard 1x1 Brick</span>
+          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Converted OBJ Mesh</span>
+        </div>
+
+        <div onclick="selectBrickTemplate('Standard 2x4 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-templates/brick_2x4.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
+          <span class="text-3xl block mb-1">🧱</span>
+          <span class="text-xs font-black block text-zinc-900">Standard 2x4 Brick</span>
+          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Item 3010 Template</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const SUPABASE_URL = "https://lfvtqvszgmqxgznupopr.supabase.co";
@@ -246,30 +184,24 @@
     let globalGlbBuffer = null;
     let currentTaskId = "";
     let currentRawModelUrl = "";
-    let base64ImageData = null;
     let activeUser = null;
     let authMode = "login";
-    
     let chatHistory = [];
-    let compilationPromptCache = "";
+    let selectedTemplateUrl = "";
 
     window.currentCreatorName = localStorage.getItem("tangiblx_alias") || "MasterBuilder";
 
     document.addEventListener("DOMContentLoaded", initializeApp);
 
     async function initializeApp() {
-      const aliasInput = document.getElementById("creatorAliasInput");
-      if (aliasInput) aliasInput.value = window.currentCreatorName;
-
+      if (document.getElementById("creatorAliasInput")) document.getElementById("creatorAliasInput").value = window.currentCreatorName;
       try {
         const { data } = await supabaseClient.auth.getSession();
         activeUser = data.session?.user || null;
-      } catch (e) { console.error(e); }
-
+      } catch (e) {}
       updateAuthUI();
       showSection(activeUser ? "workshop" : "landing");
-
-      supabaseClient.auth.onAuthStateChange((_event, session) => {
+      supabaseClient.auth.onAuthStateChange((_, session) => {
         activeUser = session?.user || null;
         updateAuthUI();
         showSection(activeUser ? "workshop" : "landing");
@@ -280,205 +212,104 @@
       document.getElementById("appNav")?.classList.toggle("hidden", !activeUser);
       document.getElementById("loginTopBtn")?.classList.toggle("hidden", !!activeUser);
       document.getElementById("logoutBtn")?.classList.toggle("hidden", !activeUser);
-      const emailDisplay = document.getElementById("userEmail");
-      if (emailDisplay) {
-        emailDisplay.classList.toggle("hidden", !activeUser);
-        emailDisplay.innerText = activeUser?.email || "";
-      }
+      if (document.getElementById("userEmail")) document.getElementById("userEmail").innerText = activeUser?.email || "";
     }
 
     function showSection(sectionId, targetMode) {
       if (targetMode) setAuthMode(targetMode);
-      if (["workshop", "orders", "marketplace"].includes(sectionId) && !activeUser) {
-        sectionId = "auth";
-        setAuthMode("login");
-      }
+      if (["workshop", "orders", "marketplace"].includes(sectionId) && !activeUser) sectionId = "auth";
       document.querySelectorAll(".section").forEach(s => s.dataset.visible = s.id === sectionId ? "true" : "false");
       document.querySelectorAll(".nav-btn").forEach(b => b.dataset.active = b.dataset.target === sectionId ? "true" : "false");
-
       if (sectionId === "orders") loadOrders();
       if (sectionId === "marketplace") loadMarketplace();
     }
 
     function setAuthMode(mode) {
       authMode = mode;
-      const isLogin = mode === "login";
-      document.getElementById("authTitle").innerText = isLogin ? "Log in to TangiblX" : "Create your TangiblX account";
-      document.getElementById("authSubmitBtn").innerText = isLogin ? "Log in" : "Sign up";
+      document.getElementById("authTitle").innerText = mode === "login" ? "Log In" : "Create Account";
     }
 
     async function submitAuth() {
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value;
-      const msg = document.getElementById("authMessage");
-      if (!email || !password) { msg.innerText = "Complete entries."; return; }
-
-      const action = authMode === "login" 
-        ? supabaseClient.auth.signInWithPassword({ email, password })
-        : supabaseClient.auth.signUp({ email, password });
-
+      const action = authMode === "login" ? supabaseClient.auth.signInWithPassword({ email, password }) : supabaseClient.auth.signUp({ email, password });
       const { error } = await action;
-      if (error) msg.innerText = error.message;
+      if (error) document.getElementById("authMessage").innerText = error.message;
     }
 
     async function logout() { await supabaseClient.auth.signOut(); }
 
-    function previewImage(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        base64ImageData = e.target.result;
-        document.getElementById("imgPreview").src = base64ImageData;
-        document.getElementById("previewFileName").innerText = file.name;
-        document.getElementById("imagePreviewContainer").classList.remove("hidden");
-        
-        appendMessage("user", `[Attached Reference Image: ${file.name}]`);
-        sendChatMessage("The user has uploaded a new image as reference. Acknowledge the image asset layout gracefully.");
-      };
-      reader.readAsDataURL(file);
+    function toggleTemplateModal(isOpen) {
+      document.getElementById("templateModal").classList.toggle("hidden", !isOpen);
     }
 
-    function clearSelectedImage(event) {
-      if (event) event.stopPropagation();
-      base64ImageData = null;
-      document.getElementById("imageInput").value = "";
-      document.getElementById("imagePreviewContainer").classList.add("hidden");
+    function selectBrickTemplate(name, url) {
+      selectedTemplateUrl = url;
+      document.getElementById("activeTemplateBadge").innerText = `Active Template: ${name}`;
+      toggleTemplateModal(false); // Snap close pop-up modal panel view frame element automatically
+      appendMessage("assistant", `Activated ${name} blueprint geometry container. What kind of texture, plating or color profile should we wrap onto this piece?`);
     }
 
     function appendMessage(sender, text) {
       const chatBox = document.getElementById("chatBox");
-      const msgBubble = document.createElement("div");
-      
-      if (sender === "user") {
-        msgBubble.className = "bg-red-600 text-white p-3 rounded-lg max-w-[85%] ml-auto font-semibold";
-      } else {
-        msgBubble.className = "bg-zinc-100 text-zinc-800 p-3 rounded-lg max-w-[85%] font-medium";
-      }
-      
-      msgBubble.innerText = text;
-      chatBox.appendChild(msgBubble);
+      const bubble = document.createElement("div");
+      bubble.className = sender === "user" ? "bg-zinc-900 text-white p-2 rounded-lg max-w-[85%] ml-auto font-semibold" : "bg-zinc-100 p-2 rounded-lg max-w-[85%] font-medium text-zinc-700";
+      bubble.innerText = text;
+      chatBox.appendChild(bubble);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    async function sendChatMessage(systemOverrideMsg) {
-      const chatInput = document.getElementById("chatInput");
-      const sendBtn = document.getElementById("sendChatBtn");
-      
-      let userText = systemOverrideMsg || chatInput.value.trim();
-      if (!userText) return;
+    async function sendChatMessage() {
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      appendMessage("user", text);
+      input.value = "";
 
-      if (!systemOverrideMsg) {
-        appendMessage("user", userText);
-        chatInput.value = "";
-      }
-
-      sendBtn.disabled = true;
-      
       try {
-        const response = await fetch(`${BACKEND_BASE_URL}/chat-assistant`, {
+        const res = await fetch(`${BACKEND_BASE_URL}/chat-assistant`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: userText,
-            history: chatHistory,
-            imageBase64: base64ImageData
-          })
+          body: JSON.stringify({ message: text, history: chatHistory })
         });
-        
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        
+        const data = await res.json();
         chatHistory = data.history;
-        compilationPromptCache = data.compiledPrompt;
-        
         appendMessage("assistant", data.reply);
-      } catch (err) {
-        appendMessage("assistant", `Error: Couldn't connect to design assistant workspace node. ${err.message}`);
-      } finally {
-        sendBtn.disabled = false;
+      } catch (e) {
+        appendMessage("assistant", "Assistant routing cluster offline.");
       }
     }
 
     function resetChat() {
       chatHistory = [];
-      compilationPromptCache = "";
-      clearSelectedImage();
-      document.getElementById("chatBox").innerHTML = `
-        <div class="bg-zinc-100 text-zinc-800 p-3 rounded-lg max-w-[85%] font-medium">
-          Workspace state scrubbed clean! Tell me what custom LEGO brick style piece you want to design.
-        </div>`;
+      selectedTemplateUrl = "";
+      document.getElementById("activeTemplateBadge").innerText = "No template brick selected yet";
+      document.getElementById("chatBox").innerHTML = `<div class="bg-zinc-100 p-2.5 rounded-lg max-w-[85%] text-zinc-700 font-medium">Workspace context cleared. Select a brick and ask for ideas!</div>`;
     }
 
-    async function trigger3DRenderPipeline() {
-      if (!compilationPromptCache) {
-        alert("Please describe your idea to the Assistant first to establish structural details!");
+    async function triggerTemplateTexturePipeline() {
+      if (!selectedTemplateUrl) {
+        alert("You must explicitly select a brick blueprint via the (🧱) template menu button first!");
         return;
       }
 
-      const genBtn = document.getElementById("generateBtn");
-      const statusText = document.getElementById("statusText");
-      const spinner = document.getElementById("spinner");
-      const viewerArea = document.getElementById("viewerArea");
-      const statusBox = document.getElementById("statusBox");
-      const actionControls = document.getElementById("actionControls");
-
-      genBtn.disabled = true;
-      statusBox.classList.remove("hidden");
-      statusText.innerText = "Compiling details and querying Tripo generative engine core nodes...";
-      spinner.classList.remove("hidden");
-      viewerArea.classList.add("hidden");
-      actionControls.classList.add("hidden");
-
-      try {
-        const response = await fetch(`${BACKEND_BASE_URL}/generate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "text_to_model",
-            prompt: compilationPromptCache
-          })
-        });
-        
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Initialization failed.");
-        
-        currentTaskId = data.task_id;
-        pollTaskProgress(data.task_id);
-      } catch (err) {
-        statusText.innerText = `Error: ${err.message}`;
-        spinner.classList.add("hidden");
-        genBtn.disabled = false;
-      }
-    }
-
-    // FIXED ASYNC TEXTURE PIPELINE INTEGRATION HOOK
-    async function triggerTexturePipeline() {
-      if (!currentTaskId) {
-        alert("There is no active model loaded in the workspace container matrix to retexture yet.");
-        return;
-      }
-
-      const texturePromptField = document.getElementById("texturePromptInput");
-      const promptText = texturePromptField ? texturePromptField.value.trim() : "";
+      const promptField = document.getElementById("texturePromptInput");
+      const promptText = promptField ? promptField.value.trim() : "";
       if (!promptText) {
-        alert("Please write a material description prompt before calling the texture execution node!");
+        alert("Please write a material texture generation prompt definition block!");
         return;
       }
 
-      const genBtn = document.getElementById("generateBtn");
-      const textureBtn = document.getElementById("retextureBtn");
+      const bakeBtn = document.getElementById("bakeBtn");
       const statusText = document.getElementById("statusText");
       const spinner = document.getElementById("spinner");
       const viewerArea = document.getElementById("viewerArea");
       const statusBox = document.getElementById("statusBox");
       const actionControls = document.getElementById("actionControls");
 
-      genBtn.disabled = true;
-      if (textureBtn) textureBtn.disabled = true;
+      bakeBtn.disabled = true;
       statusBox.classList.remove("hidden");
-      statusText.innerText = "Target model ID acquired. Generating and baking high-resolution PBR procedural maps...";
+      statusText.innerText = "Connecting to Tripo asset layer node. Sending physical file matrix & procedural requests...";
       spinner.classList.remove("hidden");
       viewerArea.classList.add("hidden");
       actionControls.classList.add("hidden");
@@ -488,24 +319,21 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            type: "texture_model",
-            original_model_task_id: currentTaskId, 
+            model_url: selectedTemplateUrl,
             prompt: promptText
           })
         });
         
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Texture assignment handshake routine failed.");
+        if (!response.ok) throw new Error(data.error || "Handshake assignment node failure.");
         
         currentTaskId = data.task_id;
         pollTaskProgress(data.task_id);
-        if (texturePromptField) texturePromptField.value = "";
 
       } catch (err) {
-        statusText.innerText = `Texture Engine Error: ${err.message}`;
+        statusText.innerText = `Baking Error: ${err.message}`;
         spinner.classList.add("hidden");
-        genBtn.disabled = false;
-        if (textureBtn) textureBtn.disabled = false;
+        bakeBtn.disabled = false;
       }
     }
 
@@ -514,8 +342,7 @@
       const spinner = document.getElementById("spinner");
       const viewerArea = document.getElementById("viewerArea");
       const viewer = document.getElementById("3dPreview");
-      const genBtn = document.getElementById("generateBtn");
-      const textureBtn = document.getElementById("retextureBtn");
+      const bakeBtn = document.getElementById("bakeBtn");
       const statusBox = document.getElementById("statusBox");
       const actionControls = document.getElementById("actionControls");
 
@@ -527,97 +354,65 @@
 
           if (task.status === "success") {
             clearInterval(interval);
-            console.log("Full Tripo Success Payload Object:", task);
-  
-            let meshUrl = null;
-            if (task.output) {
-              meshUrl = task.output.pbr_model || task.output.model;
-            } else if (task.result) {
-              meshUrl = task.result.pbr_model || task.result.model;
-            }
-
-            if (!meshUrl) {
-              const fallbacks = [task.model, task.glb, task.gltf];
-              meshUrl = fallbacks.find(u => u && typeof u === 'string' && !u.toLowerCase().endsWith('.webp'));
-            }
-          
+            
+            let meshUrl = task.output?.pbr_model || task.output?.model || task.result?.pbr_model || task.result?.model;
             currentRawModelUrl = meshUrl;
-            console.log("Extracted 3D Mesh Target Link:", currentRawModelUrl);
-          
+
             if (!currentRawModelUrl) {
-                console.error("Critical Parsing Error:", task);
-                alert("Model created successfully, but the output mesh could not be isolated from the preview snapshots.");
-                genBtn.disabled = false;
-                if (textureBtn) textureBtn.disabled = false;
+                alert("Texture map compilation completed, but file link lost integrity.");
+                bakeBtn.disabled = false;
                 return;
             }
-          
-            try {
-                const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ url: currentRawModelUrl })
-                });
-                
-                if (!fileResponse.ok) {
-                    const errorData = await fileResponse.json();
-                    throw new Error(errorData.error || `Server status: ${fileResponse.status}`);
-                }
-          
-                globalGlbBuffer = await fileResponse.arrayBuffer();
-                currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
-                
-                viewer.src = currentBlobUrl;
-          
-                statusBox.classList.add("hidden");
-                viewerArea.classList.remove("hidden");
-                actionControls.classList.remove("hidden");
-                genBtn.disabled = false;
-                if (textureBtn) textureBtn.disabled = false;
-          
-            } catch (fetchError) {
-                console.error("Fetch/Parse Failure:", fetchError);
-                alert(`Failed to load 3D asset into viewer: ${fetchError.message}`);
-                genBtn.disabled = false;
-                if (textureBtn) textureBtn.disabled = false;
-            }
+
+            const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: currentRawModelUrl })
+            });
+
+            globalGlbBuffer = await fileResponse.arrayBuffer();
+            currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
+            viewer.src = currentBlobUrl;
+
+            statusBox.classList.add("hidden");
+            viewerArea.classList.remove("hidden");
+            actionControls.classList.remove("hidden");
+            bakeBtn.disabled = false;
+
           } else if (task.status === "failed") {
             clearInterval(interval);
-            statusText.innerText = "Tripo execution cluster nodes failed rendering structures.";
+            statusText.innerText = "Baking execution failed on cluster generation segments.";
             spinner.classList.add("hidden");
-            genBtn.disabled = false;
-            if (textureBtn) textureBtn.disabled = false;
+            bakeBtn.disabled = false;
           } else {
             const progress = task.progress !== undefined ? task.progress : (task.output?.progress || 0);
-            statusText.innerText = `Sculpting mesh architecture... (${progress}%)`;
+            statusText.innerText = `Baking and mapping high-resolution procedural layouts... (${progress}%)`;
           }
-        } catch (e) {
-          console.error("Polling error encountered:", e);
-        }
+        } catch (e) { console.error(e); }
       }, 4000);
     }
 
     async function saveInitialDraft() {
       const shipMsg = document.getElementById("shipMessage");
-      shipMsg.innerText = "Uploading design structures...";
+      shipMsg.innerText = "Uploading asset reference signatures...";
       try {
         const syncRes = await fetch(`${BACKEND_BASE_URL}/save-to-storage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rawModelUrl: currentRawModelUrl, userId: activeUser.id, taskId: currentTaskId })
+          body: JSON.stringify({ rawModelUrl: currentRawModelUrl })
         });
         const syncResult = await syncRes.json();
+        const labelText = document.getElementById("texturePromptInput").value || "Custom Texture Template Piece";
 
-        const { error } = await supabaseClient.from("lego_orders").insert({
+        await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
-          prompt: compilationPromptCache ? (compilationPromptCache.substring(0, 50) + "...") : "Retextured Custom Brick",
-          input_type: "text",
+          prompt: labelText,
+          input_type: "template_retexture",
           model_url: syncResult.modelUrl,
           status: "saved",
           is_published: false
         });
-        if (error) throw error;
-        shipMsg.innerText = "Draft compiled successfully in your account portfolio!";
+        shipMsg.innerText = "Asset structural metadata configurations saved successfully!";
         resetChat();
       } catch (err) { shipMsg.innerText = `Error: ${err.message}`; }
     }
@@ -631,7 +426,7 @@
         const blob = new Blob([stlString], { type: 'text/plain' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `tangiblx-model.stl`;
+        link.download = `tangiblx-template-textured.stl`;
         link.click();
       });
     }
@@ -639,143 +434,35 @@
     async function loadOrders() {
       const grid = document.getElementById("ordersGrid");
       if (!grid || !activeUser) return;
-      grid.innerHTML = "<p class='text-sm text-zinc-500 font-semibold'>Reading database profiles...</p>";
-      
+      grid.innerHTML = "<p class='text-xs text-zinc-400'>Loading portfolio profiles...</p>";
       const { data, error } = await supabaseClient.from("lego_orders").select("*").eq("user_id", activeUser.id).order("created_at", { ascending: false });
-      if (error) { grid.innerHTML = "<p class='text-red-500'>Error Loading Data</p>"; return; }
-
-      grid.innerHTML = data.length ? data.map(o => {
-        const isOrdered = o.status === "ordered";
-        const isPublished = o.is_published === true;
-
-        let actionControls = "";
-        
-        if (!isOrdered) {
-          actionControls += `<button onclick="updateOrderStatus('${o.id}', 'ordered')" class="w-full text-center bg-red-600 text-white font-bold text-xs py-2 rounded shadow hover:bg-red-500 mb-2">Order Piece</button>`;
-        }
-
-        if (!isPublished) {
-          actionControls += `<button onclick="publishOrderToMarketplace('${o.id}')" class="w-full text-center bg-zinc-900 text-white font-bold text-xs py-2 rounded shadow hover:bg-zinc-800">Publish to Marketplace</button>`;
-        } else {
-          actionControls += `
-            <div class="space-y-2 border-t border-zinc-100 pt-2">
-              <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Live Marketplace Configurations</label>
-              <input id="edit-title-${o.id}" type="text" placeholder="Marketplace Title" value="${escapeHtml(o.marketplace_title || o.prompt)}" class="w-full text-xs border border-zinc-300 rounded p-1 outline-none">
-              <textarea id="edit-desc-${o.id}" placeholder="Marketplace Description" class="w-full text-xs border border-zinc-300 rounded p-1 h-12 resize-none outline-none">${escapeHtml(o.marketplace_description || '')}</textarea>
-              <button onclick="updateMarketplaceListing('${o.id}')" class="w-full text-center bg-emerald-600 text-white font-bold text-xs py-1.5 rounded hover:bg-emerald-500">Update Listing</button>
-            </div>`;
-        }
-
-        return `
-          <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-3 relative">
-            <div class="absolute top-6 right-6 z-10 flex items-center gap-2 bg-white/80 backdrop-blur p-1 rounded-md shadow-sm border border-zinc-200">
-              <div class="has-tooltip cursor-pointer">
-                <span class="tooltip">${isOrdered ? 'ordered' : 'saved'}</span>
-                ${isOrdered ? '📦' : '⭕'}
-              </div>
-              <div class="has-tooltip cursor-pointer">
-                <span class="tooltip">${isPublished ? 'published' : 'unpublished'}</span>
-                ${isPublished ? '🌐' : '🔒'}
-              </div>
-            </div>
-
-            <model-viewer src="${o.model_url}" camera-controls auto-rotate style="height:200px; background:#111827; border-radius:6px;"></model-viewer>
-            
-            <div class="flex items-center justify-between gap-2">
-              <h3 id="display-title-${o.id}" class="font-black text-zinc-950 truncate max-w-[85%]">${escapeHtml(o.prompt)}</h3>
-              <button onclick="triggerInlineRename('${o.id}')" class="text-zinc-400 hover:text-zinc-900 text-sm">✏️</button>
-            </div>
-            
-            <div class="pt-1">${actionControls}</div>
-          </div>`;
-      }).join("") : "<p class='text-sm text-zinc-500'>No models saved.</p>";
-    }
-
-    async function updateOrderStatus(id, newStatus) {
-      const { error } = await supabaseClient.from("lego_orders").update({ status: newStatus }).eq("id", id);
-      if (!error) loadOrders();
-    }
-
-    async function publishOrderToMarketplace(id) {
-      const { error } = await supabaseClient.from("lego_orders").update({ 
-        is_published: true, 
-        marketplace_title: "Custom LEGO piece", 
-        marketplace_description: "Shared workspace brick.",
-        author_name: window.currentCreatorName 
-      }).eq("id", id);
-      if (!error) loadOrders();
-    }
-
-    async function updateMarketplaceListing(id) {
-      const title = document.getElementById(`edit-title-${id}`).value;
-      const desc = document.getElementById(`edit-desc-${id}`).value;
-      const { error } = await supabaseClient.from("lego_orders").update({ marketplace_title: title, marketplace_description: desc }).eq("id", id);
-      if (!error) alert("Listing metadata configurations synced!");
-    }
-
-    async function triggerInlineRename(id) {
-      const oldTitle = document.getElementById(`display-title-${id}`).innerText;
-      const nextName = prompt("Enter a new display name for this order instance asset:", oldTitle);
-      if (nextName && nextName.trim() !== "") {
-        const { error } = await supabaseClient.from("lego_orders").update({ prompt: nextName.trim() }).eq("id", id);
-        if (!error) loadOrders();
-      }
-    }
-
-    async function loadMarketplace() {
-      const myGrid = document.getElementById("myMarketplaceGrid");
-      const communityGrid = document.getElementById("communityMarketplaceGrid");
-      if (!myGrid || !communityGrid) return;
-
-      myGrid.innerHTML = "<p class='text-xs text-zinc-400'>Loading your items...</p>";
-      communityGrid.innerHTML = "<p class='text-xs text-zinc-400'>Loading community pipeline feed...</p>";
-
-      const { data, error } = await supabaseClient.from("lego_orders").select("*").eq("is_published", true).order("created_at", { ascending: false });
       if (error) return;
+      grid.innerHTML = data.length ? data.map(o => `
+        <div class="rounded-lg border bg-white p-4 space-y-2 relative">
+          <model-viewer src="${o.model_url}" camera-controls auto-rotate style="height:180px; background:#111827; border-radius:6px;"></model-viewer>
+          <h3 class="font-black text-sm truncate text-zinc-950">${escapeHtml(o.prompt)}</h3>
+          <button onclick="updateOrderStatus('${o.id}', 'ordered')" class="w-full bg-red-600 text-white font-bold text-xs py-1.5 rounded shadow">Order This Part</button>
+          <button onclick="publishOrderToMarketplace('${o.id}')" class="w-full bg-zinc-900 text-white font-bold text-xs py-1.5 rounded shadow">Publish Publicly</button>
+        </div>`).join("") : "<p class='text-xs text-zinc-400'>No items saved yet.</p>";
+    }
 
-      let myHtml = "";
-      let communityHtml = "";
-
+    async function updateOrderStatus(id, newStatus) { await supabaseClient.from("lego_orders").update({ status: newStatus }).eq("id", id); loadOrders(); }
+    async function publishOrderToMarketplace(id) { await supabaseClient.from("lego_orders").update({ is_published: true, marketplace_title: "Textured Template Piece", author_name: window.currentCreatorName }).eq("id", id); loadOrders(); }
+    function updateGlobalAlias() { window.currentCreatorName = document.getElementById("creatorAliasInput").value.trim() || "MasterBuilder"; localStorage.setItem("tangiblx_alias", window.currentCreatorName); loadMarketplace(); }
+    
+    async function loadMarketplace() {
+      const myGrid = document.getElementById("myMarketplaceGrid"); const comGrid = document.getElementById("communityMarketplaceGrid");
+      const { data } = await supabaseClient.from("lego_orders").select("*").eq("is_published", true);
+      if(!data) return;
+      let myH = ""; let comH = "";
       data.forEach(m => {
-        const template = `
-          <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-2 flex flex-col justify-between">
-            <model-viewer src="${m.model_url}" camera-controls auto-rotate style="height:200px; background:#111827; border-radius:6px;"></model-viewer>
-            <div>
-              <h3 class="font-black text-zinc-950 truncate">${escapeHtml(m.marketplace_title || m.prompt)}</h3>
-              <p class="text-xs text-zinc-500 font-medium line-clamp-2">${escapeHtml(m.marketplace_description || 'No description provided.')}</p>
-            </div>
-            <div class="pt-2 border-t border-zinc-100 flex items-center justify-between text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
-              <span>By: <span class="text-red-600">${escapeHtml(m.user_id === activeUser?.id ? window.currentCreatorName : (m.author_name || 'AnonymBrick'))}</span></span>
-            </div>
-          </div>`;
-
-        if (activeUser && m.user_id === activeUser.id) {
-          myHtml += template;
-        } else {
-          communityHtml += template;
-        }
+        const t = `<div class='border p-3 rounded-lg bg-white space-y-1'><model-viewer src='${m.model_url}' camera-controls auto-rotate style='height:150px; background:#111827;'></model-viewer><h4 class='font-black text-xs truncate'>${escapeHtml(m.marketplace_title || m.prompt)}</h4></div>`;
+        if (m.user_id === activeUser?.id) myH += t; else comH += t;
       });
-
-      myGrid.innerHTML = myHtml || "<p class='text-sm text-zinc-500 col-span-full'>You have not published any models here yet.</p>";
-      communityGrid.innerHTML = communityHtml || "<p class='text-sm text-zinc-500 col-span-full'>No public creations available yet.</p>";
+      myGrid.innerHTML = myH || "<p class='text-xs text-zinc-400'>None published yet.</p>"; comGrid.innerHTML = comH || "<p class='text-xs text-zinc-400'>No community files feed active.</p>";
     }
 
-    window.updateGlobalAlias = function() {
-      const inputField = document.getElementById("creatorAliasInput");
-      const nextAlias = inputField ? inputField.value.trim() : "";
-      if (!nextAlias) {
-        alert("Publishing name cannot be completely blank!");
-        return;
-      }
-      window.currentCreatorName = nextAlias;
-      localStorage.setItem("tangiblx_alias", nextAlias);
-      console.log("Workspace builder context alias reconfigured successfully:", window.currentCreatorName);
-      loadMarketplace();
-    }
-
-    function escapeHtml(str) {
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
+    function escapeHtml(str) { return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
   </script>
 </body>
 </html>
