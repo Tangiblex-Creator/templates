@@ -26,7 +26,6 @@
     }
     .has-tooltip:hover .tooltip { visibility: visible; opacity: 1; }
     
-    /* Smooth scrollbar for chat box */
     .chat-box::-webkit-scrollbar { width: 6px; }
     .chat-box::-webkit-scrollbar-track { background: transparent; }
     .chat-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -167,10 +166,20 @@
             </div>
           </div>
 
-          <div id="actionControls" class="hidden grid gap-3 sm:grid-cols-2 pt-4 border-t border-zinc-100">
-            <button id="downloadBtn" onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
-            <button id="shipBtn" onclick="saveInitialDraft()" class="rounded-md bg-zinc-900 px-4 py-3 text-sm font-black text-white hover:bg-zinc-800">Save to Orders Portfolio</button>
-            <p id="shipMessage" class="col-span-2 min-h-6 text-xs font-semibold text-zinc-500 mt-1"></p>
+          <div id="actionControls" class="hidden space-y-3 pt-4 border-t border-zinc-100">
+            <div class="bg-zinc-50 border border-zinc-200 p-3 rounded-lg space-y-2">
+              <label class="text-[10px] font-black uppercase tracking-wider text-zinc-500 block">Mesh Refining Layer (Retexture Active Model ID)</label>
+              <div class="flex gap-2">
+                <input type="text" id="texturePromptInput" class="flex-1 text-xs rounded border border-zinc-300 bg-white px-2 py-2 outline-none focus:border-red-500" placeholder="Describe materials (e.g., weathered chrome, shiny gold plastic, camo)...">
+                <button id="retextureBtn" onclick="triggerTexturePipeline()" class="rounded bg-red-600 px-3 text-xs font-black text-white hover:bg-red-500 transition">Apply Texture</button>
+              </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <button id="downloadBtn" onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 px-4 py-3 text-sm font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
+              <button id="shipBtn" onclick="saveInitialDraft()" class="rounded-md bg-zinc-900 px-4 py-3 text-sm font-black text-white hover:bg-zinc-800">Save to Orders Portfolio</button>
+            </div>
+            <p id="shipMessage" class="min-h-6 text-xs font-semibold text-zinc-500 mt-1"></p>
           </div>
         </div>
 
@@ -444,12 +453,69 @@
       }
     }
 
+    // FIXED ASYNC TEXTURE PIPELINE INTEGRATION HOOK
+    async function triggerTexturePipeline() {
+      if (!currentTaskId) {
+        alert("There is no active model loaded in the workspace container matrix to retexture yet.");
+        return;
+      }
+
+      const texturePromptField = document.getElementById("texturePromptInput");
+      const promptText = texturePromptField ? texturePromptField.value.trim() : "";
+      if (!promptText) {
+        alert("Please write a material description prompt before calling the texture execution node!");
+        return;
+      }
+
+      const genBtn = document.getElementById("generateBtn");
+      const textureBtn = document.getElementById("retextureBtn");
+      const statusText = document.getElementById("statusText");
+      const spinner = document.getElementById("spinner");
+      const viewerArea = document.getElementById("viewerArea");
+      const statusBox = document.getElementById("statusBox");
+      const actionControls = document.getElementById("actionControls");
+
+      genBtn.disabled = true;
+      if (textureBtn) textureBtn.disabled = true;
+      statusBox.classList.remove("hidden");
+      statusText.innerText = "Target model ID acquired. Generating and baking high-resolution PBR procedural maps...";
+      spinner.classList.remove("hidden");
+      viewerArea.classList.add("hidden");
+      actionControls.classList.add("hidden");
+
+      try {
+        const response = await fetch(`${BACKEND_BASE_URL}/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "texture_model",
+            original_model_task_id: currentTaskId, 
+            prompt: promptText
+          })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Texture assignment handshake routine failed.");
+        
+        currentTaskId = data.task_id;
+        pollTaskProgress(data.task_id);
+        if (texturePromptField) texturePromptField.value = "";
+
+      } catch (err) {
+        statusText.innerText = `Texture Engine Error: ${err.message}`;
+        spinner.classList.add("hidden");
+        genBtn.disabled = false;
+        if (textureBtn) textureBtn.disabled = false;
+      }
+    }
+
     function pollTaskProgress(taskId) {
       const statusText = document.getElementById("statusText");
       const spinner = document.getElementById("spinner");
       const viewerArea = document.getElementById("viewerArea");
       const viewer = document.getElementById("3dPreview");
       const genBtn = document.getElementById("generateBtn");
+      const textureBtn = document.getElementById("retextureBtn");
       const statusBox = document.getElementById("statusBox");
       const actionControls = document.getElementById("actionControls");
 
@@ -463,7 +529,6 @@
             clearInterval(interval);
             console.log("Full Tripo Success Payload Object:", task);
   
-            // TARGET SECURED: Explicitly isolate actual 3D geometries, ignoring any preview snapshots (.webp)
             let meshUrl = null;
             if (task.output) {
               meshUrl = task.output.pbr_model || task.output.model;
@@ -483,6 +548,7 @@
                 console.error("Critical Parsing Error:", task);
                 alert("Model created successfully, but the output mesh could not be isolated from the preview snapshots.");
                 genBtn.disabled = false;
+                if (textureBtn) textureBtn.disabled = false;
                 return;
             }
           
@@ -507,17 +573,20 @@
                 viewerArea.classList.remove("hidden");
                 actionControls.classList.remove("hidden");
                 genBtn.disabled = false;
+                if (textureBtn) textureBtn.disabled = false;
           
             } catch (fetchError) {
                 console.error("Fetch/Parse Failure:", fetchError);
                 alert(`Failed to load 3D asset into viewer: ${fetchError.message}`);
                 genBtn.disabled = false;
+                if (textureBtn) textureBtn.disabled = false;
             }
           } else if (task.status === "failed") {
             clearInterval(interval);
             statusText.innerText = "Tripo execution cluster nodes failed rendering structures.";
             spinner.classList.add("hidden");
             genBtn.disabled = false;
+            if (textureBtn) textureBtn.disabled = false;
           } else {
             const progress = task.progress !== undefined ? task.progress : (task.output?.progress || 0);
             statusText.innerText = `Sculpting mesh architecture... (${progress}%)`;
@@ -541,10 +610,10 @@
 
         const { error } = await supabaseClient.from("lego_orders").insert({
           user_id: activeUser.id,
-          prompt: compilationPromptCache.substring(0, 50) + "...",
+          prompt: compilationPromptCache ? (compilationPromptCache.substring(0, 50) + "...") : "Retextured Custom Brick",
           input_type: "text",
           model_url: syncResult.modelUrl,
-          status: "unordered",
+          status: "saved",
           is_published: false
         });
         if (error) throw error;
@@ -601,7 +670,7 @@
           <div class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm space-y-3 relative">
             <div class="absolute top-6 right-6 z-10 flex items-center gap-2 bg-white/80 backdrop-blur p-1 rounded-md shadow-sm border border-zinc-200">
               <div class="has-tooltip cursor-pointer">
-                <span class="tooltip">${isOrdered ? 'ordered' : 'unordered'}</span>
+                <span class="tooltip">${isOrdered ? 'ordered' : 'saved'}</span>
                 ${isOrdered ? '📦' : '⭕'}
               </div>
               <div class="has-tooltip cursor-pointer">
@@ -704,7 +773,7 @@
       loadMarketplace();
     }
 
-    style = function escapeHtml(str) {
+    function escapeHtml(str) {
       return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
   </script>
