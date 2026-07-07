@@ -151,13 +151,13 @@
       </div>
       
       <div class="grid grid-cols-2 gap-3">
-        <div onclick="selectBrickTemplate('Standard 1x1 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-templates/brick_1x1.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
+        <div onclick="selectBrickTemplate('Standard 1x1 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-models/templates/Brick%201x1.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
           <span class="text-3xl block mb-1">🧱</span>
           <span class="text-xs font-black block text-zinc-900">Standard 1x1 Brick</span>
           <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Template glb</span>
         </div>
 
-        <div onclick="selectBrickTemplate('Standard 2x4 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-templates/brick_2x4.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
+        <div onclick="selectBrickTemplate('Standard 2x4 Brick', 'https://lfvtqvszgmqxgznupopr.supabase.co/storage/v1/object/public/lego-models/templates/Brick%202x4.glb')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
           <span class="text-3xl block mb-1">🧱</span>
           <span class="text-xs font-black block text-zinc-900">Standard 2x4 Brick</span>
           <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Item 3010 Template</span>
@@ -273,9 +273,7 @@
         chatHistory = data.history;
 
         let reply = data.reply;
-        // Check if the AI has flagged the session as complete
-        if (reply.includes("[READY]")) {
-          reply = reply.replace("[READY]", "").trim();
+        if (data.isReady) {
           unlockBakeButton();
         }
 
@@ -324,7 +322,6 @@
       actionControls.classList.add("hidden");
 
       try {
-        // Step 1: Tell backend to summarize chat into detailed Tripo format prompt
         const summaryRes = await fetch(`${BACKEND_BASE_URL}/summarize-prompt`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -335,7 +332,6 @@
 
         statusText.innerText = `Compiled Prompt: "${systemInferredPrompt}". Shipping mapping task to Tripo cluster...`;
 
-        // Step 2: Push the summarized prompt into Tripo asset retexturer node
         const response = await fetch(`${BACKEND_BASE_URL}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
