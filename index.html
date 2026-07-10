@@ -154,13 +154,13 @@
         <div onclick="selectBrickTemplate('Standard 1x1 Brick', '1x1')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
           <span class="text-3xl block mb-1">🧱</span>
           <span class="text-xs font-black block text-zinc-900">Standard 1x1 Brick</span>
-          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Template id: 1x1</span>
+          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Template glb</span>
         </div>
 
         <div onclick="selectBrickTemplate('Standard 2x4 Brick', '2x4')" class="border border-zinc-200 p-4 rounded-lg text-center cursor-pointer transition hover:border-red-500 hover:bg-red-50/40">
           <span class="text-3xl block mb-1">🧱</span>
           <span class="text-xs font-black block text-zinc-900">Standard 2x4 Brick</span>
-          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Template id: 2x4</span>
+          <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-wider block mt-0.5">Item 3010 Template</span>
         </div>
       </div>
     </div>
@@ -183,7 +183,7 @@
     let activeUser = null;
     let authMode = "login";
     let chatHistory = [];
-    let selectedTemplateId = ""; // Track ID string instead of a URL path
+    let selectedTemplateId = "";
     let systemInferredPrompt = "";
 
     window.currentCreatorName = localStorage.getItem("tangiblx_alias") || "MasterBuilder";
@@ -251,14 +251,7 @@
       const chatBox = document.getElementById("chatBox");
       const bubble = document.createElement("div");
       bubble.className = sender === "user" ? "bg-zinc-900 text-white p-2 rounded-lg max-w-[85%] ml-auto font-semibold" : "bg-zinc-100 p-2 rounded-lg max-w-[85%] font-medium text-zinc-700";
-      
-      // Formatting fallback to render markdown headers/bullets into the interface nicely
-      let formattedText = text
-        .replace(/### (.*)/g, '<b class="text-sm block mt-1 text-zinc-900 font-black">$1</b>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/\* (.*)/g, '<span class="block ml-2">• $1</span>');
-
-      bubble.innerHTML = formattedText;
+      bubble.innerText = text;
       chatBox.appendChild(bubble);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -279,12 +272,12 @@
         const data = await res.json();
         chatHistory = data.history;
 
-        // FIXED: Unlock instantly when flag payload evaluates true
-        if (data.isReady === true) {
+        let reply = data.reply;
+        if (data.isReady) {
           unlockBakeButton();
         }
 
-        appendMessage("assistant", data.reply);
+        appendMessage("assistant", reply);
       } catch (e) {
         appendMessage("assistant", "Assistant connectivity failed.");
       }
@@ -343,7 +336,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model_id: selectedTemplateId, // Passing model_id to match backend structural update
+            model_id: selectedTemplateId,
             prompt: systemInferredPrompt
           })
         });
