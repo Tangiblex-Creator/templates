@@ -274,17 +274,34 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text, history: chatHistory })
         });
+        
+        if (!res.ok) {
+          throw new Error(`Server returned status code ${res.status}`);
+        }
+        
         const data = await res.json();
-        chatHistory = data.history;
+        
+        if (data.history) {
+          chatHistory = data.history;
+        }
 
-        let reply = data.reply;
-        if (data.isReady) {
+        let reply = "I couldn't process that reply. Please try again.";
+        if (data.reply) {
+          reply = data.reply;
+        } else if (data.message) {
+          reply = data.message;
+        } else if (typeof data === 'string') {
+          reply = data;
+        }
+
+        if (data.isReady || data.ready) {
           unlockBakeButton();
         }
 
         appendMessage("assistant", reply);
       } catch (e) {
-        appendMessage("assistant", "Assistant connectivity failed.");
+        console.error("Chat routing exception caught:", e);
+        appendMessage("assistant", `Assistant connectivity failed: ${e.message}`);
       }
     }
 
@@ -381,7 +398,6 @@
           
           const task = result.data || result;
           
-          // REPLACED WITH STRING LOGGING TO FORCE EXPANSION IN THE CONSOLE
           console.log("Tripo Status Ping Response:", JSON.stringify(task, null, 2));
 
           if (task.status === "success") {
@@ -426,7 +442,15 @@
             
           } else if (task.status === "failed" || task.status === "cancelled") {
             clearInterval(interval);
-            statusText.innerText = `Baking execution failed: ${task.message || "Cluster pipeline aborted."}`;
+            
+            let failReason = task.message || "Cluster pipeline aborted.";
+            if (task.error_code === 1001) {
+              failReason = "Tripo Texture Engine Crash (Error 1001). The AI prompt might be too complex for this brick shape, or the texture generation timed out. Try simplifying your wording!";
+            } else if (task.error_code) {
+              failReason = `Tripo Pipeline Error Code: ${task.error_code}`;
+            }
+
+            statusText.innerText = `Baking execution failed: ${failReason}`;
             spinner.classList.add("hidden");
           } else {
             let progress = 0;
