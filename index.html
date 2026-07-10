@@ -130,7 +130,7 @@
           <div id="actionControls" class="hidden space-y-2 pt-4 border-t border-zinc-100">
             <div class="grid gap-2 grid-cols-2">
               <button onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 py-2.5 text-xs font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
-              <button onclick="saveInitialDraft()" class="rounded-md bg-zinc-950 py-2.5 text-xs font-black text-white hover:bg-zinc-800">Save to Portfolio</button>
+              <button onclick="saveInitialDraft()" class="rounded-md bg-zinc-950 py-2.5 text-xs font-black text-white hover:bg-white border hover:text-zinc-950">Save to Portfolio</button>
             </div>
             <p id="shipMessage" class="min-h-4 text-[11px] font-bold text-zinc-500 mt-1"></p>
           </div>
@@ -366,18 +366,41 @@
         try {
           const res = await fetch(`${BACKEND_BASE_URL}/status/${taskId}`);
           const result = await res.json();
+          
           const task = result.data || result;
+          console.log("Tripo Status Ping Response:", task);
 
           if (task.status === "success") {
             clearInterval(interval);
-            let meshUrl = task.output?.pbr_model || task.output?.model || task.result?.pbr_model || task.result?.model;
+            
+            let meshUrl = "";
+            if (task.output) {
+              meshUrl = task.output.pbr_model || task.output.model || task.output.glb || task.output.model_url;
+            }
+            if (!meshUrl && task.result) {
+              meshUrl = task.result.pbr_model || task.result.model || task.result.glb || task.result.model_url;
+            }
+            if (!meshUrl && task.output?.files) {
+              meshUrl = task.output.files.glb || task.output.files.pbr;
+            }
+
+            if (!meshUrl) {
+              console.error("Could not find model URL path in Tripo payload:", task);
+              throw new Error("Model compilation succeeded, but file location parameters are missing.");
+            }
+
             currentRawModelUrl = meshUrl;
+            statusText.innerText = "Downloading finalized PBR asset stream...";
 
             const fileResponse = await fetch(`${BACKEND_BASE_URL}/fetch-file`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ url: currentRawModelUrl })
             });
+
+            if (!fileResponse.ok) {
+              throw new Error(`Proxy asset delivery stream failed (${fileResponse.status})`);
+            }
 
             globalGlbBuffer = await fileResponse.arrayBuffer();
             currentBlobUrl = URL.createObjectURL(new Blob([globalGlbBuffer], { type: "model/gltf-binary" }));
@@ -386,15 +409,22 @@
             statusBox.classList.add("hidden");
             viewerArea.classList.remove("hidden");
             actionControls.classList.remove("hidden");
-          } else if (task.status === "failed") {
+            
+          } else if (task.status === "failed" || task.status === "cancelled") {
             clearInterval(interval);
-            statusText.innerText = "Baking execution failed on cluster pipeline.";
+            statusText.innerText = `Baking execution failed: ${task.message || "Cluster pipeline aborted."}`;
             spinner.classList.add("hidden");
           } else {
-            const progress = task.progress !== undefined ? task.progress : (task.output?.progress || 0);
+            let progress = 0;
+            if (task.progress !== undefined) progress = task.progress;
+            else if (task.output?.progress !== undefined) progress = task.output.progress;
+            
             statusText.innerText = `Baking high-resolution textures onto template... (${progress}%)`;
           }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+          console.error("Poller runtime exception caught:", e);
+          statusText.innerText = `Baking Connection Warning: ${e.message}`;
+        }
       }, 4000);
     }
 
