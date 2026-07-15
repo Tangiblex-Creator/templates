@@ -9,7 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
   <style>
     html { scroll-behavior: smooth; }
     model-viewer { width: 100%; height: 280px; background: #111827; border-radius: 8px; }
@@ -134,7 +133,7 @@
 
           <div id="actionControls" class="hidden space-y-2 pt-4 border-t border-zinc-100">
             <div class="grid gap-2 grid-cols-2">
-              <button onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 py-2.5 text-xs font-black text-zinc-800 hover:bg-zinc-100">Download STL</button>
+              <button onclick="downloadCurrentModel()" class="rounded-md border border-zinc-300 py-2.5 text-xs font-black text-zinc-800 hover:bg-zinc-100">Download File</button>
               <button onclick="saveInitialDraft()" class="rounded-md bg-zinc-950 py-2.5 text-xs font-black text-white hover:bg-white border hover:text-zinc-950">Save to Portfolio</button>
             </div>
             <p id="shipMessage" class="min-h-4 text-[11px] font-bold text-zinc-500 mt-1"></p>
@@ -492,16 +491,12 @@
 
     function downloadCurrentModel() {
       if (!globalGlbBuffer) return;
-      const loader = new THREE.GLTFLoader();
-      loader.parse(globalGlbBuffer, "", (gltf) => {
-        const exporter = new THREE.STLExporter();
-        const stlString = exporter.parse(gltf.scene, { binary: false });
-        const blob = new Blob([stlString], { type: 'text/plain' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `tangiblx-template-textured.stl`;
-        link.click();
-      });
+      // Package the binary buffer directly to download the textured .glb asset
+      const blob = new Blob([globalGlbBuffer], { type: 'model/gltf-binary' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `tangiblx-template-textured.glb`;
+      link.click();
     }
 
     async function loadOrders() {
